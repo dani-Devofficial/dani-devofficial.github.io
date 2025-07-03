@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dani</title>
+  <title>Dani의 공식 사이트</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f0f0f0;
+      background: linear-gradient(to bottom right, #ffffff, #e6f7ff);
       margin: 0;
       padding: 0;
+      color: #333;
     }
 
     header {
-      background: #282c34;
+      background: #003366;
       color: white;
       padding: 20px;
       text-align: center;
@@ -25,85 +26,153 @@
     }
 
     .menu-btn {
-      background: linear-gradient(145deg, #3e3e3e, #2e2e2e);
+      background: #0059b3;
       color: white;
       border: none;
       margin: 5px;
       padding: 10px 20px;
       border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     .menu-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      background: #004080;
     }
 
-    #search {
-      margin-top: 15px;
-      padding: 10px;
-      width: 60%;
+    #report-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: crimson;
+      color: white;
+      padding: 10px 15px;
       border-radius: 10px;
       border: none;
-      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
     main {
-      padding: 20px;
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
     }
 
-    iframe {
-      width: 100%;
-      height: 600px;
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    #content h2 {
+      color: #0066cc;
+    }
+
+    /* 팝업 스타일 */
+    #popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    #popup {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
       background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+      width: 90%;
+      max-width: 500px;
+    }
+
+    #popup h3 {
+      margin-top: 0;
+    }
+
+    #close-popup {
+      margin-top: 20px;
+      background: #888;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Dani</h1>
+    <h1>Dani의 멋진 웹사이트</h1>
     <nav>
       <button class="menu-btn" data-page="home">홈</button>
       <button class="menu-btn" data-page="intro">소개</button>
       <button class="menu-btn" data-page="apps">APPS</button>
     </nav>
-    <input type="text" id="search" placeholder="검색어 입력..." />
   </header>
+
+  <button id="report-btn">🐞 버그 제보</button>
 
   <main>
     <section id="content">
-      <iframe src="home.html" id="mainFrame"></iframe>
+      <h2>홈 🏠</h2>
+      <p><strong>Dani</strong>의 공식 웹사이트에 오신 것을 환영합니다!</p>
+      <p>이 사이트는 <strong>Dani</strong>가 직접 기획하고 만든 멋진 공간으로, 다양한 <strong>앱</strong>, 그리고 개발자들을 위한 <strong>기술 정보</strong>를 한눈에 확인할 수 있도록 구성되어 있습니다.</p>
+      <p>메뉴를 통해 각 섹션(소개, APPS 등)으로 이동할 수 있으며, 최신 기능과 <strong>업데이트</strong>도 지속적으로 반영될 예정이에요!</p>
+      <p>지금 바로 둘러보며 <strong>Dani</strong>의 창의적인 아이디어와 멋진 작업물들을 만나보세요! 😊</p>
     </section>
   </main>
 
-  <script>
-    const iframe = document.getElementById("mainFrame");
+  <!-- 팝업 오버레이 -->
+  <div id="popup-overlay"></div>
 
-    function loadPage(page) {
-      iframe.src = page + ".html";
-    }
+  <!-- 팝업 창 -->
+  <div id="popup">
+    <h3>버그 제보</h3>
+    <p>발견한 버그를 아래에 제보해 주세요!</p>
+    <form action="https://formspree.io/f/mdkzjlpr" method="POST">
+      <input type="text" name="name" placeholder="이름" style="width:100%;padding:10px;margin-bottom:10px;" required><br>
+      <input type="email" name="email" placeholder="답변 받을 이메일 (선택)" style="width:100%;padding:10px;margin-bottom:10px;"><br>
+      <textarea name="message" placeholder="버그 내용을 입력해 주세요" rows="5" style="width:100%;padding:10px;" required></textarea><br>
+      <button type="submit" style="margin-top:10px;padding:10px 20px;background:#007bff;color:white;border:none;border-radius:6px;">제보하기</button>
+    </form>
+    <button id="close-popup">닫기</button>
+  </div>
+
+  <script>
+    const content = document.getElementById("content");
+    const pages = {
+      home: `<h2>홈 🏠</h2><p>Dani의 메인 페이지입니다. 환영합니다!</p>`,
+      intro: `<h2>소개 👋</h2><p>안녕하세요! 저는 Dani입니다. 이 사이트는 제가 만든 다양한 프로젝트와 앱들을 소개하는 공간입니다.</p>`,
+      apps: `<h2>APPS 📱</h2><p>여기엔 제가 개발한 앱들이 올라올 예정입니다. 기대해주세요!</p>`
+    };
 
     document.querySelectorAll(".menu-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const page = btn.dataset.page;
-        loadPage(page);
+        content.innerHTML = pages[page];
       });
     });
 
-    document.getElementById("search").addEventListener("input", (e) => {
-      const query = e.target.value.toLowerCase();
-      if (query.includes("소개")) {
-        loadPage("intro");
-      } else if (query.includes("apps")) {
-        loadPage("apps");
-      } else if (query.includes("홈") || query.includes("home")) {
-        loadPage("home");
-      }
+    const reportBtn = document.getElementById("report-btn");
+    const popup = document.getElementById("popup");
+    const overlay = document.getElementById("popup-overlay");
+    const closePopup = document.getElementById("close-popup");
+
+    reportBtn.addEventListener("click", () => {
+      popup.style.display = "block";
+      overlay.style.display = "block";
+    });
+
+    closePopup.addEventListener("click", () => {
+      popup.style.display = "none";
+      overlay.style.display = "none";
+    });
+
+    overlay.addEventListener("click", () => {
+      popup.style.display = "none";
+      overlay.style.display = "none";
     });
   </script>
 </body>
