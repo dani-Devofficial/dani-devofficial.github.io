@@ -95,6 +95,84 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       background: white;
     }
+
+    /* 모달 스타일 */
+    #reportModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.4);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #reportModal .modal-content {
+      background: white;
+      padding: 24px 20px 16px 20px;
+      border-radius: 10px;
+      width: 95%;
+      max-width: 400px;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    #closeModalBtn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    #reportModal label {
+      font-weight: bold;
+      display: block;
+      margin-top: 8px;
+      margin-bottom: 2px;
+    }
+
+    #reportModal input[type="email"],
+    #reportModal input[type="text"],
+    #reportModal textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    #reportModal textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    #reportModal button[type="submit"] {
+      background: #ffb300;
+      border: none;
+      padding: 10px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+
+    #reportModal .radio-group {
+      font-weight: normal;
+      margin-bottom: 8px;
+    }
+
+    #reportModal .radio-group label {
+      display: inline-block;
+      font-weight: normal;
+      margin-right: 18px;
+    }
   </style>
 </head>
 <body>
@@ -118,8 +196,29 @@
     </section>
   </main>
 
+  <!-- 모달 폼 추가 -->
+  <div id="reportModal">
+    <div class="modal-content">
+      <button id="closeModalBtn" title="닫기">×</button>
+      <h2 style="margin-top:0;">버그/아이디어 제보</h2>
+      <form action="https://formspree.io/f/meokdnww" method="POST">
+        <div class="radio-group">
+          <label><input type="radio" name="type" value="버그" required> 버그</label>
+          <label><input type="radio" name="type" value="아이디어" required> 아이디어</label>
+        </div>
+        <label>답변받을 이메일 (선택)</label>
+        <input type="email" name="email" placeholder="your@email.com">
+        <label>앱 또는 사이트</label>
+        <input type="text" name="platform" placeholder="앱 또는 사이트 이름" required>
+        <label>내용</label>
+        <textarea name="message" required placeholder="자세한 내용을 입력해주세요"></textarea>
+        <button type="submit">보내기</button>
+      </form>
+    </div>
+  </div>
+
   <script>
-    // 메뉴 클릭 시 iframe 변경
+    // 페이지 전환 기능
     const buttons = document.querySelectorAll('.menu-btn');
     const iframe = document.getElementById('mainFrame');
 
@@ -130,11 +229,18 @@
       });
     });
 
-    // 팝업으로 form.html 열기
-    const loginBtn = document.getElementById('loginBtn');
-    loginBtn.addEventListener('click', () => {
-      window.open('./form.html', 'formPopup', 'width=600,height=700,resizable=yes,scrollbars=yes');
-    });
+    // 모달 열기/닫기
+    document.getElementById("loginBtn").onclick = function() {
+      document.getElementById("reportModal").style.display = "flex";
+    };
+
+    document.getElementById("closeModalBtn").onclick = function() {
+      document.getElementById("reportModal").style.display = "none";
+    };
+
+    document.getElementById("reportModal").onclick = function(e) {
+      if (e.target === this) this.style.display = "none";
+    };
   </script>
 </body>
 </html>
