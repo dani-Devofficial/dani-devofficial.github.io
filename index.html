@@ -190,7 +190,7 @@
 
   <main>
     <section id="content">
-      <iframe src="home.html" id="mainFrame"></iframe>
+      <iframe src="./iframe/home.html" id="mainFrame"></iframe>
     </section>
   </main>
 
@@ -219,7 +219,7 @@
     document.querySelectorAll('.menu-btn').forEach(button => {
       button.addEventListener('click', () => {
         const page = button.getAttribute('data-page');
-        document.getElementById('mainFrame').src = `${page}.html`;
+        document.getElementById('mainFrame').src = `./iframe/${page}.html`;
       });
     });
 
