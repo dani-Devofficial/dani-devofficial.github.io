@@ -118,7 +118,23 @@
     </section>
   </main>
 
-  <!
+  <script>
+    // 메뉴 클릭 시 iframe 변경
+    const buttons = document.querySelectorAll('.menu-btn');
+    const iframe = document.getElementById('mainFrame');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const page = btn.getAttribute('data-page');
+        iframe.src = page + '.html';
+      });
+    });
+
+    // 팝업으로 form.html 열기
+    const loginBtn = document.getElementById('loginBtn');
+    loginBtn.addEventListener('click', () => {
+      window.open('./form.html', 'formPopup', 'width=600,height=700,resizable=yes,scrollbars=yes');
+    });
   </script>
 </body>
 </html>
