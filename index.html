@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dani 사이트</title>
   <meta name="description" content="강력하고, 심플하고, 간단한 Apps">
   <style>
@@ -60,7 +60,7 @@
       padding: 8px 16px;
       border-radius: 10px;
       cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     }
 
     .user-icon {
@@ -92,16 +92,15 @@
       height: 600px;
       border: none;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       background: white;
     }
 
-    /* 모달 스타일 */
     #reportModal {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0, 0, 0, 0.4);
       z-index: 9999;
       align-items: center;
       justify-content: center;
@@ -180,7 +179,6 @@
     <h1>Dani의 멋진 사이트</h1>
     <nav>
       <button class="menu-btn" data-page="home">홈</button>
-      <button class="menu-btn" data-page="intro">소개</button>
       <button class="menu-btn" data-page="apps">APPS</button>
     </nav>
     <div class="top-right">
@@ -196,12 +194,12 @@
     </section>
   </main>
 
-  <!-- 모달 폼 추가 -->
   <div id="reportModal">
     <div class="modal-content">
       <button id="closeModalBtn" title="닫기">×</button>
       <h2 style="margin-top:0;">버그/아이디어 제보</h2>
       <form action="https://formspree.io/f/meokdnww" method="POST">
+        <input type="hidden" name="_redirect" value="https://dani.enn.kr/thanks.html">
         <div class="radio-group">
           <label><input type="radio" name="type" value="버그" required> 버그</label>
           <label><input type="radio" name="type" value="아이디어" required> 아이디어</label>
@@ -218,29 +216,26 @@
   </div>
 
   <script>
-    // 페이지 전환 기능
-    const buttons = document.querySelectorAll('.menu-btn');
-    const iframe = document.getElementById('mainFrame');
-
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const page = btn.getAttribute('data-page');
-        iframe.src = page + '.html';
+    document.querySelectorAll('.menu-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const page = button.getAttribute('data-page');
+        document.getElementById('mainFrame').src = `${page}.html`;
       });
     });
 
-    // 모달 열기/닫기
-    document.getElementById("loginBtn").onclick = function() {
-      document.getElementById("reportModal").style.display = "flex";
-    };
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      document.getElementById('reportModal').style.display = 'flex';
+    });
 
-    document.getElementById("closeModalBtn").onclick = function() {
-      document.getElementById("reportModal").style.display = "none";
-    };
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      document.getElementById('reportModal').style.display = 'none';
+    });
 
-    document.getElementById("reportModal").onclick = function(e) {
-      if (e.target === this) this.style.display = "none";
-    };
+    document.getElementById('reportModal').addEventListener('click', (e) => {
+      if (e.target.id === 'reportModal') {
+        e.target.style.display = 'none';
+      }
+    });
   </script>
 </body>
 </html>
