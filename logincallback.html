@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>로그인 확인중...</title>
+</head>
+<body>
+  <h1>로그인 확인중입니다...</h1>
+  <script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js"></script>
+  <script>
+    const naverLogin = new naver.LoginWithNaverId({
+      clientId: "AqENEx4jz_pbu9TFT53R",
+      callbackUrl: "https://dani.enn.kr/logincallback.html",
+      isPopup: false
+    });
+
+    naverLogin.getLoginStatus(function(status) {
+      if (status) {
+        const name = naverLogin.user.getName();
+        const email = naverLogin.user.getEmail();
+        alert(`${name}님 (${email}) 환영합니다! 🎉`);
+        // 로그인 성공 시 로그인 상태를 저장하고 메인으로 이동 (여기서는 간단히 세션스토리지 사용)
+        sessionStorage.setItem("isLoggedIn", "true");
+        sessionStorage.setItem("userName", name);
+        window.location.href = "index.html";
+      } else {
+        alert("로그인 실패 😥");
+        window.location.href = "index.html";
+      }
+    });
+  </script>
+</body>
+</html>
