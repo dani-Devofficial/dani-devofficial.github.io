@@ -106,7 +106,7 @@
       <button class="menu-btn" data-page="apps">APPS</button>
     </nav>
     <div class="top-right">
-      <button id="loginBtn" class="login-btn">로그인</button>
+      <button id="loginBtn" class="login-btn">버그/아이디어 제보</button>
       <div class="user-icon" id="userIcon"></div>
       <button id="apiBtn" class="api-btn">API</button>
     </div>
@@ -118,67 +118,7 @@
     </section>
   </main>
 
-  <!-- 네이버 로그인 버튼 -->
-  <div id="naverIdLogin" style="display:none;"></div>
-
-  <script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" type="text/javascript"></script>
-  <script>
-    const iframe = document.getElementById("mainFrame");
-    const loginBtn = document.getElementById("loginBtn");
-    const userIcon = document.getElementById("userIcon");
-    const apiBtn = document.getElementById("apiBtn");
-    const header = document.getElementById("siteHeader");
-
-    // 메뉴 버튼 클릭 시 iframe 변경
-    function loadPage(page) {
-      iframe.src = page + ".html";
-    }
-
-    document.querySelectorAll(".menu-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const page = btn.dataset.page;
-        loadPage(page);
-      });
-    });
-
-    // 로그인 상태 변수 (임시)
-    let isLoggedIn = false;
-
-    // 네이버 로그인 객체 (초기화는 로그인 시)
-    let naverLogin;
-
-    // 로그인 버튼 클릭 이벤트
-    loginBtn.addEventListener("click", () => {
-      if (!isLoggedIn) {
-        // 로그인창 열기 (팝업)
-        naverLogin = new naver.LoginWithNaverId({
-          clientId: "AqENEx4jz_pbu9TFT53R",
-          callbackUrl: "https://dani.enn.kr/logincallback.html",
-          isPopup: true,
-          loginButton: { color: "green", type: 3, height: 40 }
-        });
-        naverLogin.init();
-        // 팝업 띄우기 대신 직접 호출해서 로그인 상태 확인 불가, 네이버 로그인페이지로 이동 필요함
-        alert("로그인 페이지로 이동합니다.");
-        window.location.href = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=AqENEx4jz_pbu9TFT53R&redirect_uri=${encodeURIComponent("https://dani.enn.kr/logincallback.html")}&state=STATE_STRING`;
-      } else {
-        // 로그아웃 처리 (임시)
-        isLoggedIn = false;
-        loginBtn.style.display = "inline-block";
-        userIcon.style.display = "none";
-        apiBtn.style.display = "none";
-        header.classList.remove("logged-in");
-        alert("로그아웃 되었습니다.");
-      }
-    });
-
-    // API 버튼 클릭 시
-    apiBtn.addEventListener("click", () => {
-      loadPage("api");
-    });
-
-    // 여기서 실제 로그인 상태 확인은 callback 페이지에서 처리하고 다시 돌아올 때 세션이나 쿠키 등을 이용해야 함
-    // 지금은 임시로 로그인 상태 유지 방법은 없음
+  <!
   </script>
 </body>
 </html>
