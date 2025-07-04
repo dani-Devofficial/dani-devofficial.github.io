@@ -18,6 +18,8 @@
       padding: 20px;
       text-align: center;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      position: relative;
+      transition: background 0.5s ease;
     }
 
     nav {
@@ -41,13 +43,43 @@
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     }
 
-    #search {
-      margin-top: 15px;
-      padding: 10px;
-      width: 60%;
-      border-radius: 10px;
+    .top-right {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .login-btn {
+      background: #00c3ff;
       border: none;
-      font-size: 16px;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .user-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: white;
+      background-image: url('https://cdn-icons-png.flaticon.com/512/847/847969.png');
+      background-size: cover;
+      display: none;
+    }
+
+    .api-btn {
+      display: none;
+      background: #4CAF50;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
     }
 
     main {
@@ -65,14 +97,18 @@
   </style>
 </head>
 <body>
-  <header>
+  <header id="siteHeader">
     <h1>Dani의 멋진 사이트</h1>
     <nav>
       <button class="menu-btn" data-page="home">홈</button>
       <button class="menu-btn" data-page="intro">소개</button>
       <button class="menu-btn" data-page="apps">APPS</button>
     </nav>
-    <input type="text" id="search" placeholder="검색어 입력..." />
+    <div class="top-right">
+      <button id="loginBtn" class="login-btn">로그인</button>
+      <div class="user-icon" id="userIcon"></div>
+      <button id="apiBtn" class="api-btn">API</button>
+    </div>
   </header>
 
   <main>
@@ -81,9 +117,18 @@
     </section>
   </main>
 
+  <!-- 네이버 로그인 버튼 -->
+  <div id="naverIdLogin" style="display:none;"></div>
+
+  <script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.2.js" type="text/javascript"></script>
   <script>
     const iframe = document.getElementById("mainFrame");
+    const loginBtn = document.getElementById("loginBtn");
+    const userIcon = document.getElementById("userIcon");
+    const apiBtn = document.getElementById("apiBtn");
+    const header = document.getElementById("siteHeader");
 
+    // 메뉴 버튼 클릭 시 iframe 변경
     function loadPage(page) {
       iframe.src = page + ".html";
     }
@@ -95,16 +140,44 @@
       });
     });
 
-    document.getElementById("search").addEventListener("input", (e) => {
-      const query = e.target.value.toLowerCase();
-      if (query.includes("소개")) {
-        loadPage("intro");
-      } else if (query.includes("apps")) {
-        loadPage("apps");
-      } else if (query.includes("홈") || query.includes("home")) {
-        loadPage("home");
+    // 로그인 상태 변수 (임시)
+    let isLoggedIn = false;
+
+    // 네이버 로그인 객체 (초기화는 로그인 시)
+    let naverLogin;
+
+    // 로그인 버튼 클릭 이벤트
+    loginBtn.addEventListener("click", () => {
+      if (!isLoggedIn) {
+        // 로그인창 열기 (팝업)
+        naverLogin = new naver.LoginWithNaverId({
+          clientId: "AqENEx4jz_pbu9TFT53R",
+          callbackUrl: "https://dani.enn.kr/logincallback.html",
+          isPopup: true,
+          loginButton: { color: "green", type: 3, height: 40 }
+        });
+        naverLogin.init();
+        // 팝업 띄우기 대신 직접 호출해서 로그인 상태 확인 불가, 네이버 로그인페이지로 이동 필요함
+        alert("로그인 페이지로 이동합니다.");
+        window.location.href = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=AqENEx4jz_pbu9TFT53R&redirect_uri=${encodeURIComponent("https://dani.enn.kr/logincallback.html")}&state=STATE_STRING`;
+      } else {
+        // 로그아웃 처리 (임시)
+        isLoggedIn = false;
+        loginBtn.style.display = "inline-block";
+        userIcon.style.display = "none";
+        apiBtn.style.display = "none";
+        header.classList.remove("logged-in");
+        alert("로그아웃 되었습니다.");
       }
     });
+
+    // API 버튼 클릭 시
+    apiBtn.addEventListener("click", () => {
+      loadPage("api");
+    });
+
+    // 여기서 실제 로그인 상태 확인은 callback 페이지에서 처리하고 다시 돌아올 때 세션이나 쿠키 등을 이용해야 함
+    // 지금은 임시로 로그인 상태 유지 방법은 없음
   </script>
 </body>
 </html>
