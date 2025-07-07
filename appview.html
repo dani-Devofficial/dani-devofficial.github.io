@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>앱 소개 페이지</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       margin: 0;
@@ -78,7 +78,6 @@
   </style>
 </head>
 <body>
-
   <header>
     <div class="logo">
       <img id="appicon" src="" alt="앱 아이콘" />
@@ -93,8 +92,8 @@
     <img id="screenshot" src="x.png" alt="앱 스크린샷" />
   </div>
 
-  <footer>
-    V1.0<br/>
+  <footer id="footer">
+    V1.0<br />
     ⓒ 2025 DaniSoftware
   </footer>
 
@@ -106,18 +105,36 @@
     const desc = params.get("description");
     const download = params.get("download");
     const shot = params.get("screenshot");
+    const mwc = params.get("mwc") === "true";
 
     if (!name || !download || !shot) {
       alert("없는 앱입니다");
       window.location.href = "404.html";
     } else {
       document.getElementById("appname").textContent = name;
-      document.getElementById("appicon").src = icon || "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/3D_icon_magnifier.png/600px-3D_icon_magnifier.png";
+      document.getElementById("appicon").src =
+        icon ||
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/3D_icon_magnifier.png/600px-3D_icon_magnifier.png";
       document.getElementById("appdesc").textContent = desc || "설명 없음";
       document.getElementById("downloadBtn").href = download;
       document.getElementById("screenshot").src = shot;
+
+      if (mwc) {
+        const img = document.createElement("img");
+        img.src = "mwc.jpg";
+        img.alt = "MWC 이미지";
+        img.style.width = "200px";
+        img.style.marginTop = "20px";
+        img.style.borderRadius = "12px";
+        img.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+        img.style.display = "block";
+        img.style.marginLeft = "auto";
+        img.style.marginRight = "auto";
+
+        const footer = document.getElementById("footer");
+        footer.parentNode.insertBefore(img, footer);
+      }
     }
   </script>
-
 </body>
 </html>
