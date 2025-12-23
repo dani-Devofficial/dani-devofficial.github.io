@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>3D Roller Coaster — Single File</title>
+<style>
+  :root{
+    --ui-bg: rgba(0,0,0,0.55);
+    --ui-fg: #fff;
+  }
+  html,body{height:100%;margin:0;background:#111;color:var(--ui-fg);font-family:Inter,system-ui,Segoe UI,Roboto}
+  #ui{
+    position:absolute;left:12px;top:12px;padding:10px;border-radius:8px;background:var(--ui-bg);backdrop-filter: blur(6px);
+    color:var(--ui-fg);z-index:100;
+    width:360px;
+  }
+  #ui .row{margin:6px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  #ui .small{font-size:12px;opacity:0.9}
+  button{padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:#222;color:var(--ui-fg)}
+  select,input[type=range]{margin-left:6px}
+  canvas{display:block;width:100%;height:100%}
+  .hint { font-size:12px; opacity:0.9; margin-top:6px; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div class="row">
+    <button id="playPause">Pause</button>
+    <button id="reset">Reset</button>
+    <label>Brake: <input id="brake" type="range" min="0" max="1" step="0.01" value="0"></label>
+  </div>
+  <div class="row">
+    Camera:
+    <select id="camMode">
+      <option value="third">3rd person (follow)</option>
+      <option value="first">1st person</option>
+      <option value="free">Free orbit</option>
+    </select>
+    Speed: <span id="speed">0.00</span> m/s
+  </div>
+  <div class="row small">Controls: WASD to nudge speed, Space to toggle pause, Drag to pan (free), Mouse wheel to zoom</div>
+  <div class="hint">Tip: 클릭/터치로 사운드 재생 허용. 트랙 제어점은 코드 내부 ctrlPoints 배열에서 수정 가능합니다.</div>
+</div>
+
+<script type="module">
+// Single-file 3D Roller Coaster (three.js from CDN)
+// Requires network to fetch three.js modules. Run on a local server for best results.
+
+// Imports
+import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js';
+
+// ---------- Scene / Renderer ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+// Camera and controls
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 10000);
+camera.position.set(0, 5, 20);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.enabled = false; // enabled only for free mode
+
+window.addEventListener('resize', ()=> {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// lights
+const hemi = new THREE.HemisphereLight(0xffffee, 0x444455, 0.9); scene.add(hemi);
+const dir = new THREE.DirectionalLight(0xffffff, 0.9); dir.position.set(-40,60,20); dir.castShadow=true; scene.add(dir);
+
+// ---------- Track control points (편집: 여기서 수정) ----------
+const ctrlPoints = [
+  new THREE.Vector3(0,2,0),
+  new THREE.Vector3(20,8,-40),
+  new THREE.Vector3(50,0,-80),
+  new THREE.Vector3(100,20,-100),
+  new THREE.Vector3(180,5,-50),
+  new THREE.Vector3(240,20,30),
+  new THREE.Vector3(200,0,120),
+  new THREE.Vector3(120,5,200),
+  new THREE.Vector3(30,2,160),
+  new THREE.Vector3(-40,0,80),
+  new THREE.Vector3(-10,4,0)
+];
+// 기본 트랙: 제어점 리스트 (사용자 클릭으로 추가 가능)
+
+// create visual control points (optional)
+const cpMat = new THREE.MeshStandardMaterial({color:0xff6666, roughness:0.7});
+for(const p of ctrlPoints){
+  const s = new THREE.Mesh(new THREE.SphereGeometry(1.0,12,8), cpMat);
+  s.position.copy(p); scene.add(s);
+}
+
+// ground
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000,2000), new THREE.MeshStandardMaterial({color:0x2a6b2a}));
+ground.rotation.x = -Math.PI/2; ground.position.y = -60; ground.receiveShadow=true; scene.add(ground);
+
+// Tube (track) geometry
+const trackCurve = new THREE.CatmullRomCurve3(ctrlPoints, false, 'catmullrom', 0.5);
+const tubularSegments = 2000;
+const radius = 0.9;
+const radialSegments = 8;
+const tubeGeometry = new THREE.TubeGeometry(trackCurve, tubularSegments, radius, radialSegments, false);
+const tubeMat = new THREE.MeshStandardMaterial({ color:0x555555, metalness:0.4, roughness:0.6 });
+const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMat); tubeMesh.receiveShadow=true; tubeMesh.castShadow=true;
+scene.add(tubeMesh);
+
+// ---------- Car visual ----------
+const car = new THREE.Group();
+const base = new THREE.Mesh(new THREE.BoxGeometry(4,1.2,2.6), new THREE.MeshStandardMaterial({color:0xffcc33}));
+base.position.set(0,0.6,0); base.castShadow=true; car.add(base);
+const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.2,1.0,1.8), new THREE.MeshStandardMaterial({color:0xaa2222}));
+cabin.position.set(0,1.05,0); cabin.castShadow=true; car.add(cabin);
+// wheels visual
+const wheelGeo = new THREE.CylinderGeometry(0.35,0.35,0.6,12); wheelGeo.rotateZ(Math.PI/2);
+const wheelMat = new THREE.MeshStandardMaterial({color:0x111111});
+for(let i=-1;i<=1;i+=2){
+  for(let z=-1; z<=1; z+=2){
+    const w = new THREE.Mesh(wheelGeo, wheelMat); w.position.set(i*1.5,0.2,z*1.1); w.castShadow=true; car.add(w);
+  }
+}
+scene.add(car);
+
+// ---------- Simulation state ----------
+let s = 0.0; // normalized param along curve (0..1)
+let speed = 0.0; // m/s along track
+const trackLength = trackCurve.getLength();
+const mass = 300.0; // kg (car + passengers)
+const g = 9.81; // m/s^2
+let running = true;
+let brake = 0.0;
+let camMode = 'third';
+
+// curvature radius estimation
+function curvatureRadiusAt(u) {
+  const eps = 1e-4;
+  const u1 = Math.max(0, u-eps);
+  const u2 = Math.min(1, u+eps);
+  const p1 = trackCurve.getPointAt(u1);
+  const p2 = trackCurve.getPointAt(u);
+  const p3 = trackCurve.getPointAt(u2);
+  const t1 = new THREE.Vector3().subVectors(p2,p1).normalize();
+  const t2 = new THREE.Vector3().subVectors(p3,p2).normalize();
+  const dt = new THREE.Vector3().subVectors(t2,t1);
+  const dtheta = dt.length()/ ( (u2-u1) * trackLength );
+  if(dtheta < 1e-7) return Infinity;
+  return 1.0 / dtheta;
+}
+
+// physics integration (semi-implicit)
+const airDragCoef = 0.45; // tune
+const rollingFriction = 0.03; // tune
+function physicsStep(dt) {
+  const tangent = trackCurve.getTangentAt(s).normalize();
+  const slopeSin = -tangent.y; // downhill positive
+  const accel_gravity = g * slopeSin;
+  const drag = -Math.sign(speed) * (airDragCoef * speed * speed) / mass;
+  const friction_force = -rollingFriction * speed;
+  const brakeForce = -Math.sign(speed) * brake * 500.0; // braking force magnitude
+  let a = accel_gravity + drag + friction_force + brakeForce / mass;
+  speed += a * dt;
+  if(Math.abs(speed) < 0.001) speed = 0;
+  const ds = (speed * dt) / Math.max(0.0001, trackLength);
+  s += ds;
+  if(s >= 1.0){ s = 1.0; speed = Math.max(0, speed * -0.25); running = false; }
+  if(s <= 0.0){ s = 0.0; speed = 0; }
+  // update car transform
+  const pNow = trackCurve.getPointAt(s);
+  const tNow = trackCurve.getTangentAt(s).normalize();
+  car.position.copy(pNow);
+  // banking (roll) from centripetal acceleration
+  const R = curvatureRadiusAt(s);
+  let roll = 0;
+  if(isFinite(R) && R > 1) {
+    const centrip = (speed*speed) / R;
+    roll = Math.atan2(centrip, g);
+    roll = THREE.MathUtils.clamp(roll, -Math.PI/4, Math.PI/4);
+  }
+  // orientation: align forward to tangent and apply roll about forward axis
+  const forward = tNow.clone().normalize();
+  const up = new THREE.Vector3(0,1,0);
+  const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1), forward);
+  const rollQuat = new THREE.Quaternion().setFromAxisAngle(forward, -roll);
+  quat.multiply(rollQuat);
+  car.setRotationFromQuaternion(quat);
+  car.position.add(new THREE.Vector3(0,0.5,0));
+}
+
+// ---------- Camera update ----------
+function updateCamera(dt) {
+  if(camMode === 'free') { controls.enabled = true; controls.update(); return; }
+  controls.enabled = false;
+  const p = trackCurve.getPointAt(s);
+  const tang = trackCurve.getTangentAt(s).normalize();
+  if(camMode === 'third') {
+    const behind = tang.clone().multiplyScalar(-8).add(new THREE.Vector3(0,4,0));
+    const camPos = new THREE.Vector3().addVectors(p, behind);
+    camera.position.lerp(camPos, 0.15);
+    const lookAt = p.clone().add(tang.clone().multiplyScalar(6));
+    camera.lookAt(lookAt);
+  } else if(camMode === 'first') {
+    const camPos = p.clone().add(tang.clone().multiplyScalar(1.5)).add(new THREE.Vector3(0,1.0,0));
+    camera.position.lerp(camPos, 0.5);
+    const lookAt = p.clone().add(tang.clone().multiplyScalar(20));
+    camera.lookAt(lookAt);
+  }
+}
+
+// ---------- Simple WebAudio (wind + rumble) ----------
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioCtx();
+const masterGain = audioCtx.createGain(); masterGain.gain.value = 0.8; masterGain.connect(audioCtx.destination);
+
+// noise rumble
+const bufferSize = 1 * audioCtx.sampleRate;
+const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+const data = noiseBuffer.getChannelData(0);
+for(let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * 0.5;
+const noiseNode = audioCtx.createBufferSource(); noiseNode.buffer = noiseBuffer; noiseNode.loop = true;
+const noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0.0;
+const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400;
+noiseNode.connect(lp); lp.connect(noiseGain); noiseGain.connect(masterGain);
+noiseNode.start();
+
+// wind oscillator
+const windOsc = audioCtx.createOscillator(); windOsc.type = 'sawtooth';
+const windGain = audioCtx.createGain(); windGain.gain.value = 0.0;
+const windHP = audioCtx.createBiquadFilter(); windHP.type = 'highpass'; windHP.frequency.value = 500;
+windOsc.connect(windHP); windHP.connect(windGain); windGain.connect(masterGain);
+windOsc.frequency.value = 60; windOsc.start();
+
+function ensureAudioStarted(){ if(audioCtx.state === 'suspended') audioCtx.resume(); }
+window.addEventListener('pointerdown', ensureAudioStarted, {once:true});
+window.addEventListener('keydown', ensureAudioStarted, {once:true});
+
+function updateSound(){
+  const speedRatio = THREE.MathUtils.clamp(Math.abs(speed) / 40.0, 0, 1);
+  noiseGain.gain.linearRampToValueAtTime(0.15 * speedRatio, audioCtx.currentTime + 0.05);
+  lp.frequency.value = 300 + 2000 * speedRatio;
+  windGain.gain.linearRampToValueAtTime(0.02 * speedRatio, audioCtx.currentTime + 0.05);
+  windOsc.frequency.setTargetAtTime(80 + 400 * speedRatio, audioCtx.currentTime, 0.05);
+}
+
+// ---------- UI bindings ----------
+const playBtn = document.getElementById('playPause');
+const resetBtn = document.getElementById('reset');
+const speedLabel = document.getElementById('speed');
+const camSelect = document.getElementById('camMode');
+const brakeSlider = document.getElementById('brake');
+
+playBtn.addEventListener('click', ()=>{ running = !running; playBtn.textContent = running ? 'Pause' : 'Play'; });
+resetBtn.addEventListener('click', ()=>{ s = 0; speed = 0; running = true; playBtn.textContent = 'Pause'; });
+camSelect.addEventListener('change', (e)=>{ camMode = e.target.value; });
+brakeSlider.addEventListener('input', (e)=>{ brake = parseFloat(e.target.value); });
+
+window.addEventListener('keydown', (e)=>{
+  if(e.code === 'Space'){ running = !running; playBtn.textContent = running ? 'Pause' : 'Play'; }
+  if(e.key === 'w' || e.key === 'ArrowUp'){ speed += 2; }
+  if(e.key === 's' || e.key === 'ArrowDown'){ speed -= 2; }
+});
+
+// ---------- Interaction: click to give impulse ----------
+renderer.domElement.addEventListener('pointerdown', (ev)=> {
+  // clicking gives a forward push
+  speed += 3.5;
+});
+
+// ---------- Main loop ----------
+let last = performance.now();
+function loop(){
+  const now = performance.now(); const dt = Math.min(0.05, (now-last)/1000); last = now;
+  if(running) physicsStep(dt);
+  updateCamera(dt);
+  updateSound();
+  renderer.render(scene, camera);
+  speedLabel.textContent = speed.toFixed(2);
+  requestAnimationFrame(loop);
+}
+loop();
+
+</script>
+</body>
+</html>
