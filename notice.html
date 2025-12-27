@@ -124,7 +124,9 @@
         const title = escapeHtml(item.title || item.heading || '무제 공지');
         const date = formatDate(item.date || item.created_at || '');
         const raw = (item.content || item.body || '');
-        const summary = escapeHtml(String(raw)).slice(0,200) + (String(raw).length>200? '…' : '');
+        const rawStr = String(raw || '');
+        const excerpt = rawStr.length > 200 ? rawStr.slice(0,200) + '…' : rawStr;
+        const summary = escapeHtml(excerpt);
         return `
 <li class="card" data-id="${escapeHtml(item.id||item.title||date)}" tabindex="0">
   <h3>${title}</h3>
@@ -146,28 +148,29 @@
 
     function openModal(id){
       const item = findById(id);
-      if(!item) return;
-      modalTitle.textContent = item.title || item.heading || '무제 공지';
-      modalDate.textContent = formatDate(item.date || item.created_at || '');
+      if(!item || !modal) return;
+      if (modalTitle) modalTitle.textContent = item.title || item.heading || '무제 공지';
+      if (modalDate) modalDate.textContent = formatDate(item.date || item.created_at || '');
       // show content safely
       const raw = item.content || item.body || '';
-      modalContent.innerHTML = escapeHtml(raw).replace(/\n/g,'<br>');
+      if (modalContent) modalContent.innerHTML = escapeHtml(raw).replace(/\n/g,'<br>');
       modal.hidden = false;
       document.body.style.overflow = 'hidden';
-      closeBtn.focus();
+      if (closeBtn) closeBtn.focus();
     }
 
     function closeModal(){
+      if (!modal) return;
       modal.hidden = true;
       document.body.style.overflow = '';
     }
 
     // events
-    searchEl.addEventListener('input', ()=>renderList());
-    sortEl.addEventListener('change', ()=>renderList());
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
-    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.hidden) closeModal(); });
+    if (searchEl) searchEl.addEventListener('input', ()=>renderList());
+    if (sortEl) sortEl.addEventListener('change', ()=>renderList());
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (modal) modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && modal && !modal.hidden) closeModal(); });
 
     // init
     loadData();
