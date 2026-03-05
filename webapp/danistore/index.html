@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DaniStore</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f4f6f8;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#0a6cf5;
+      --radius:12px;
+      --gap:18px;
+      --max-width:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background:var(--bg);
+      color:#111827;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px 20px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .wrap{width:100%;max-width:var(--max-width);}
+
+    /* Header */
+    header{
+      display:flex;align-items:center;gap:16px;margin-bottom:22px;
+    }
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+    .logo .badge{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#0067b8,#00a4ff);display:flex;align-items:center;justify-content:center;color:white;font-weight:800}
+    .search{flex:1;display:flex;align-items:center;gap:12px;background:var(--card);padding:10px 14px;border-radius:10px;box-shadow:0 1px 0 rgba(16,24,40,0.03);}
+    .search input{border:0;outline:0;font-size:14px;flex:1}
+    .header-actions{display:flex;align-items:center;gap:14px}
+    .avatar{width:38px;height:38px;border-radius:999px;background:linear-gradient(90deg,#f97316,#f43f5e);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+
+    /* Hero */
+    .hero{display:grid;grid-template-columns:1fr 340px;gap:18px;margin-bottom:26px}
+    .hero .banner{background:linear-gradient(180deg,#131820,#24303a);border-radius:14px;color:white;padding:26px;min-height:160px;display:flex;flex-direction:column;justify-content:center}
+    .banner h1{margin:0;font-size:22px}
+    .banner p{margin:8px 0 0;color:rgba(255,255,255,0.8)}
+    .hero .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .small-tile{background:var(--card);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 0 rgba(16,24,40,0.04)}
+
+    /* Sections */
+    .section{background:transparent;padding:6px 0 24px}
+    .section .title-row{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}
+    .section h2{margin:0;font-size:18px}
+    .section .more{font-size:13px;color:var(--muted)}
+
+    /* Grid of small cards (two-column area like '인기 게임' + '인기 앱') */
+    .two-column{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+    .card-block{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 1px 0 rgba(16,24,40,0.04)}
+    .card-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .tiny-card{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px}
+    .thumb{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    .tiny-card .meta{font-size:13px}
+    .tiny-card .meta .name{display:block;font-weight:600}
+    .tiny-card .meta .sub{color:var(--muted);font-size:12px}
+
+    /* Horizontal carousel */
+    .carousel{display:flex;gap:14px;overflow:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+    .carousel::-webkit-scrollbar{height:10px}
+    .carousel::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:999px}
+    .big-card{min-width:180px;background:var(--card);border-radius:12px;padding:12px;box-shadow:0 1px 0 rgba(16,24,40,0.05);scroll-snap-align:center}
+    .big-card .cover{height:110px;border-radius:8px;background:linear-gradient(135deg,#10b981,#06b6d4);margin-bottom:10px}
+    .big-card h3{margin:0;font-size:14px}
+    .big-card p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    /* Mixed multi row grid */
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:10px}
+
+    footer{margin-top:28px;padding:20px 10px;border-top:1px solid rgba(16,24,40,0.04);color:var(--muted);font-size:13px}
+
+    /* Responsive */
+    @media (max-width:1000px){
+      .hero{grid-template-columns:1fr 260px}
+      .grid-4{grid-template-columns:repeat(2,1fr)}
+      .two-column{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      body{padding:16px}
+      .hero{grid-template-columns:1fr}
+      .hero .tiles{grid-template-columns:1fr 1fr}
+      .grid-4{grid-template-columns:repeat(2,1fr)}
+      header{flex-direction:column;align-items:stretch;gap:10px}
+      .search{order:2}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <div class="badge">D</div>
+        <div>
+          <div style="font-size:14px">DaniStore</div>
+          <div style="font-size:12px;color:var(--muted)">Beta</div>
+        </div>
+      </div>
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 21l-4.35-4.35" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#9ca3af" stroke-width="2"/></svg>
+        <input placeholder="앱 검색" />
+        <div style="font-size:13px;color:var(--muted);"></div>
+      </div>
+      <div class="header-actions">
+        <button style="background:transparent;border:0;color:var(--muted);font-weight:600">개발자</button>
+        <button style="background:transparent;border:0;color:var(--muted);font-weight:600">DaniStore 앱 설치</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="banner">
+          <h1>{RandomAppname}</h1>
+          <p>{RandomAppDescripiton}</p>
+          <div style="margin-top:14px;display:flex;gap:10px">
+            <button style="background:var(--card);border-radius:8px;padding:8px 12px;border:0;font-weight:700">자세히 보기</button>
+            <button style="background:transparent;border:1px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.9);border-radius:8px;padding:8px 12px">설치</button>
+          </div>
+        </div>
+        <div class="tiles">
+          <div class="small-tile">
+            <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">P</div>
+            <div>
+              <div style="font-weight:700">인기 앱</div>
+            </div>
+          </div>
+          <div class="small-tile">
+            <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#ef4444,#f97316);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">G</div>
+            <div>
+              <div style="font-weight:700">카테고리</div>
+            </div>
+          </div>
+
+          <div class="small-tile">
+            <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#14b8a6);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">A</div>
+            <div>
+              <div style="font-weight:700">DaniStore Pick!</div>
+            </div>
+          </div>
+          <div class="small-tile">
+            <div style="width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#06a6f2,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-weight:800">T</div>
+            <div>
+              <div style="font-weight:700">새로운 앱</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="two-column">
+          <div class="card-block">
+            <div class="title-row"><h2>인기 게임</h2><div class="more">더보기</div></div>
+            <div class="card-list">
+              <div class="tiny-card"><div class="thumb">{populargameicon1}</div><div class="meta"><span class="name">{populargamename1}</span><span class="sub">{populargamedesc1}</span></div></div>
+              <div class="tiny-card"><div class="thumb">{populargameicon2}</div><div class="meta"><span class="name">{populargamename2}</span><span class="sub">{populargamedesc2}</span></div></div>
+              <div class="tiny-card"><div class="thumb">{populargameicon3}</div><div class="meta"><span class="name">{populargamename3}</span><span class="sub">{populargamedesc3}</span></div></div>
+              <div class="tiny-card"><div class="thumb">{populargameicon4}</div><div class="meta"><span class="name">{populargamename4}</span><span class="sub">{populargamedesc4}</span></div></div>
+            </div>
+          </div>
+
+          <div class="card-block">
+            <div class="title-row"><h2>인기 앱</h2><div class="more">더보기</div></div>
+            <div class="card-list">
+              <div class="tiny-card"><div class="thumb">{popularappicon1}</div><div class="meta"><span class="name">{popularappname1}</span><span class="sub">{popularappdesc1}</span></div></div>
+              <div class="tiny-card"><div class="thumb">{popularappicon2}</div><div class="meta"><span class="name">{popularappname2}</span><span class="sub">{popularappdesc2}</span></div></div>
+              <div class="tiny-card"><div class="thumb">{popularappicon3}</div><div class="meta"><span class="name">{popularappname3}</span><span class="sub">{popularappdesc3}</span></div></div>
+              <div class="tiny-card"><div class="thumb">{popularappicon4}</div><div class="meta"><span class="name">{popularappname4}</span><span class="sub">{popularappdesc4}</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="title-row"><h2>최다 판매 게임</h2><div class="more">더보기</div></div>
+        <div class="carousel" style="margin-bottom:6px">
+          <div class="big-card"><div class="cover"></div><h3>MineWorld</h3><p>판매량 1위</p></div>
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#f97316,#ef4444)"></div><h3>Candy Crush</h3><p>캐주얼 • 인기</p></div>
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#6b7280,#111827)"></div><h3>Adventure</h3><p>RPG</p></div>
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)"></div><h3>Racing X</h3><p>레이싱</p></div>
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#10b981,#06b6d4)"></div><h3>Strategy Pro</h3><p>전략 • 탑셀러</p></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="title-row"><h2>생산성 앱</h2><div class="more">더보기</div></div>
+        <div class="grid-4">
+          <div class="big-card"><div class="cover" style="height:72px;background:linear-gradient(135deg,#06a6f2,#8b5cf6)"></div><h3>Copilot</h3><p>작업 보조</p></div>
+          <div class="big-card"><div class="cover" style="height:72px;background:linear-gradient(135deg,#06b6d4,#14b8a6)"></div><h3>PDF Reader</h3><p>문서</p></div>
+          <div class="big-card"><div class="cover" style="height:72px;background:linear-gradient(135deg,#f97316,#ef4444)"></div><h3>Zoom</h3><p>회의</p></div>
+          <div class="big-card"><div class="cover" style="height:72px;background:linear-gradient(135deg,#10b981,#06b6d4)"></div><h3>PowerToys</h3><p>도구 모음</p></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="title-row"><h2>추천 신작</h2><div class="more">더보기</div></div>
+        <div class="carousel">
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#7c3aed,#06b6d4)"></div><h3>Mage Tower</h3><p>신규</p></div>
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#ef4444,#f97316)"></div><h3>Call of Duty</h3><p>액션</p></div>
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)"></div><h3>Ninja Garden</h3><p>스릴러</p></div>
+          <div class="big-card"><div class="cover" style="background:linear-gradient(135deg,#10b981,#06b6d4)"></div><h3>The Outer Worlds 2</h3><p>RPG</p></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="title-row"><h2>컬렉션</h2><div class="more">더보기</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <div class="card-block" style="display:flex;gap:12px;align-items:center"><div style="width:88px;height:60px;border-radius:8px;background:linear-gradient(135deg,#06b6d4,#8b5cf6)"></div><div><strong>Xbox Play Anywhere</strong><div style="color:var(--muted);font-size:13px">PC용으로도 플레이 가능</div></div></div>
+          <div class="card-block" style="display:flex;gap:12px;align-items:center"><div style="width:88px;height:60px;border-radius:8px;background:linear-gradient(135deg,#f97316,#ef4444)"></div><div><strong>Windows 테마</strong><div style="color:var(--muted);font-size:13px">데스크톱 꾸미기</div></div></div>
+          <div class="card-block" style="display:flex;gap:12px;align-items:center"><div style="width:88px;height:60px;border-radius:8px;background:linear-gradient(135deg,#10b981,#06b6d4)"></div><div><strong>레이싱 게임</strong><div style="color:var(--muted);font-size:13px">속도감을 느껴보세요</div></div></div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      © Microsoft Store — Demo UI clone. 이 샘플은 원본 레이아웃을 참고하여 구현한 예시입니다.
+    </footer>
+  </div>
+</body>
+</html>
