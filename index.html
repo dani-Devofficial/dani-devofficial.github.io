@@ -2,10 +2,13 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Danisw</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #141e30, #243b55);
@@ -25,10 +28,25 @@
       padding: 1rem 2rem;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
-    header h1 a { color: #fff; text-decoration: none; font-size: 1.8rem; }
-    nav { display: flex; align-items: center; gap: 1rem; }
-    nav a { color: #fff; text-decoration: none; font-weight: bold; transition: 0.3s; }
-    nav a:hover { color: #0ff; }
+    header h1 a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.8rem;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    nav a:hover {
+      color: #0ff;
+    }
     nav input {
       padding: 0.4rem 0.8rem;
       border-radius: 10px;
@@ -54,230 +72,22 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
       text-align: center;
     }
-    .glass h2 { font-size: 2rem; margin-bottom: 1rem; }
-    .glass p { font-size: 1.2rem; }
-
-    /* ── Chat Widget Styles ── */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-
-    .chat-bubble {
-      position: fixed;
-      bottom: 28px; right: 28px;
-      width: 60px; height: 60px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1a6cf7, #0f4fd1);
-      box-shadow: 0 8px 32px rgba(26,108,247,0.45), 0 2px 8px rgba(0,0,0,0.15);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: transform 0.2s, box-shadow 0.2s;
-      z-index: 9999;
-      border: none;
+    .glass h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
-    .chat-bubble:hover {
-      transform: scale(1.08);
-      box-shadow: 0 12px 40px rgba(26,108,247,0.55), 0 4px 12px rgba(0,0,0,0.2);
+    .glass p {
+      font-size: 1.2rem;
     }
-    .chat-bubble svg { transition: transform 0.3s; }
-    .chat-bubble.open svg { transform: rotate(90deg); }
-
-    .unread-badge {
-      position: absolute; top: -2px; right: -2px;
-      width: 18px; height: 18px;
-      background: #ef4444;
-      border-radius: 50%;
-      border: 2px solid white;
-      font-size: 10px; color: white;
-      display: none; align-items: center; justify-content: center;
-      font-weight: 700;
-    }
-    .unread-badge.show { display: flex; }
-
-    .chat-panel {
-      position: fixed;
-      bottom: 100px; right: 28px;
-      width: 380px; height: 580px;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.18), 0 4px 24px rgba(0,0,0,0.08);
-      display: flex; flex-direction: column;
-      overflow: hidden;
-      z-index: 9998;
-      transform: scale(0.85) translateY(24px);
-      opacity: 0;
-      pointer-events: none;
-      transform-origin: bottom right;
-      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.22s ease;
-    }
-    .chat-panel.open {
-      transform: scale(1) translateY(0);
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .panel-header {
-      background: linear-gradient(135deg, #1a6cf7, #0f4fd1);
-      padding: 22px 20px 18px;
-      flex-shrink: 0;
-    }
-    .panel-header-top {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
-    }
-    .brand-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-    }
-    .brand-name { color: white; font-weight: 700; font-size: 15px; }
-    .online-indicator {
-      margin-left: auto;
-      display: flex; align-items: center; gap: 5px;
-      font-size: 12px; color: rgba(255,255,255,0.85);
-    }
-    .online-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: #4ade80;
-      box-shadow: 0 0 6px #4ade80;
-      animation: glow 1.8s infinite;
-    }
-    @keyframes glow { 0%,100% { opacity:1; } 50% { opacity: 0.4; } }
-    .panel-greeting {
-      color: white;
-      font-size: 20px; font-weight: 700; line-height: 1.3;
-      letter-spacing: -0.3px;
-    }
-    .panel-sub { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 4px; }
-
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 16px 8px;
-      display: flex; flex-direction: column; gap: 10px;
-      scroll-behavior: smooth;
-      background: #f8fafc;
-    }
-    .messages::-webkit-scrollbar { width: 0; }
-
-    .msg-row { display: flex; flex-direction: column; max-width: 80%; }
-    .msg-row.user { align-self: flex-end; align-items: flex-end; }
-    .msg-row.admin { align-self: flex-start; align-items: flex-start; }
-
-    .msg-with-avatar { display: flex; align-items: flex-end; gap: 7px; }
-    .msg-avatar {
-      width: 26px; height: 26px; border-radius: 50%;
-      background: linear-gradient(135deg, #1a6cf7, #764ba2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; color: white; font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .bubble {
-      padding: 10px 14px;
-      font-size: 14px; line-height: 1.55;
-      word-break: break-word;
-      animation: msgIn 0.22s ease;
-      font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
-    }
-    @keyframes msgIn {
-      from { opacity:0; transform: translateY(6px) scale(0.97); }
-      to   { opacity:1; transform: translateY(0) scale(1); }
-    }
-    .msg-row.user .bubble {
-      background: #1a6cf7; color: white;
-      border-radius: 18px 18px 4px 18px;
-    }
-    .msg-row.admin .bubble {
-      background: white; color: #1e293b;
-      border-radius: 18px 18px 18px 4px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    }
-    .msg-time { font-size: 10px; color: #94a3b8; margin-top: 3px; padding: 0 4px; }
-
-    .date-divider {
-      display: flex; align-items: center; gap: 10px;
-      color: #94a3b8; font-size: 11px; margin: 4px 0;
-    }
-    .date-divider::before, .date-divider::after {
-      content: ''; flex: 1; height: 1px; background: #e2e8f0;
-    }
-
-    .input-area {
-      padding: 12px 14px;
-      border-top: 1px solid #f1f5f9;
-      background: white;
-      display: flex; align-items: flex-end; gap: 8px;
-      flex-shrink: 0;
-    }
-    .input-wrap {
-      flex: 1;
-      background: #f8fafc;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 22px;
-      padding: 9px 16px;
-      transition: border-color 0.2s;
-      display: flex; align-items: flex-end;
-    }
-    .input-wrap:focus-within { border-color: #1a6cf7; background: white; }
-    .chat-panel textarea {
-      background: transparent; border: none; outline: none;
-      color: #1e293b; font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
-      font-size: 14px; resize: none; width: 100%;
-      max-height: 90px; line-height: 1.5;
-    }
-    .chat-panel textarea::placeholder { color: #94a3b8; }
-    .send-btn {
-      width: 38px; height: 38px;
-      background: #1a6cf7; border: none; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0;
-      transition: transform 0.15s, background 0.15s;
-    }
-    .send-btn:hover { transform: scale(1.08); background: #0f4fd1; }
-    .send-btn:active { transform: scale(0.94); }
-    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-    .powered {
-      text-align: center; padding: 7px;
-      font-size: 11px; color: #cbd5e1;
-      background: white; flex-shrink: 0;
-    }
-    .powered a { color: #1a6cf7; text-decoration: none; }
-
-    .start-state {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 14px;
-      padding: 24px; background: #f8fafc;
-    }
-    .start-card {
-      width: 100%;
-      background: white;
-      border-radius: 14px;
-      padding: 18px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-      cursor: pointer;
-      border: 1.5px solid transparent;
-      transition: all 0.2s;
-      display: flex; align-items: center; gap: 14px;
-    }
-    .start-card:hover { border-color: #1a6cf7; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(26,108,247,0.12); }
-    .start-icon {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: linear-gradient(135deg, #1a6cf711, #764ba211);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
-    }
-    .start-card-title { font-weight: 600; font-size: 14px; color: #1e293b; }
-    .start-card-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
   </style>
-
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1MG9LL3TXV"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-1MG9LL3TXV');
-  </script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1MG9LL3TXV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1MG9LL3TXV');
+</script>
 </head>
 <body>
   <header>
@@ -286,251 +96,27 @@
       <a href="index.html">홈</a>
       <a href="apps.html">APPS</a>
       <a href="api.html">Devlopers</a>
+      <a href="notice.html">공지사항</a>
       <input type="text" placeholder="🔍 검색..." />
     </nav>
   </header>
-
   <main>
     <section class="glass">
       <h2>Dani</h2>
       <p>초딩 Programer</p>
     </section>
   </main>
-
-  <!-- ── Chat Widget ── -->
-  <button class="chat-bubble" id="chatBubble" onclick="togglePanel()">
-    <svg id="bubbleIcon" width="26" height="26" viewBox="0 0 24 24" fill="none">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="white"/>
-    </svg>
-    <div class="unread-badge" id="unreadBadge">1</div>
-  </button>
-
-  <div class="chat-panel" id="chatPanel">
-    <div class="panel-header">
-      <div class="panel-header-top">
-        <div class="brand-avatar">🏢</div>
-        <div class="brand-name">My Company</div>
-        <div class="online-indicator">
-          <div class="online-dot"></div>
-          온라인
-        </div>
-      </div>
-      <div class="panel-greeting">안녕하세요! 👋<br>무엇을 도와드릴까요?</div>
-      <div class="panel-sub">보통 몇 분 안에 답변드립니다.</div>
-    </div>
-    <div id="panelBody"></div>
-    <div class="powered">We run on <a href="#">SupportChat</a></div>
-  </div>
-  <!-- ── End Chat Widget ── -->
-
   <script>
+    // 검색창 기능은 나중에 추가할 수 있어!
     console.log("DANI 홈페이지 로딩 완료 🎉");
   </script>
-
-  <!-- Chat Widget Script -->
   <script>
-    const SUPABASE_URL = 'https://zuarjzskoxkdkqegszhn.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1YXJqenNrb3hrZGtxZWdzemhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MTM4NzcsImV4cCI6MjA4ODE4OTg3N30.dw1g3ZWw-Uhei0eRIzQhPfxUW_j3_b86Ou2d3dzAmPI';
+  (function(){var w=window;if(w.ChannelIO){return w.console.error("ChannelIO script included twice.");}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement("script");s.type="text/javascript";s.async=true;s.src="https://cdn.channel.io/plugin/ch-plugin-web.js";var x=document.getElementsByTagName("script")[0];if(x.parentNode){x.parentNode.insertBefore(s,x);}}if(document.readyState==="complete"){l();}else{w.addEventListener("DOMContentLoaded",l);w.addEventListener("load",l);}})();
 
-    let isOpen = false;
-    let chatId = null;
-    let messages = [];
-    let polling = null;
-
-    (function init() {
-      const params = new URLSearchParams(location.search);
-      let id = params.get('id');
-      if (!id) id = localStorage.getItem('support_chat_id');
-      if (id) { chatId = id; loadChat(); }
-      renderPanelBody();
-    })();
-
-    function togglePanel() {
-      isOpen = !isOpen;
-      document.getElementById('chatPanel').classList.toggle('open', isOpen);
-      document.getElementById('chatBubble').classList.toggle('open', isOpen);
-      document.getElementById('unreadBadge').classList.remove('show');
-      if (isOpen && chatId) scrollBottom();
-    }
-
-    async function apiGet(id) {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/support_chats?chatid=eq.${encodeURIComponent(id)}&select=*`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-      );
-      const d = await res.json(); return d[0] || null;
-    }
-    async function apiUpsert(id, xml) {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/support_chats`, {
-        method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify({ chatid: id, chatdata: xml, updated_at: new Date().toISOString() })
-      });
-      return res.ok;
-    }
-
-    function parseXML(xml) {
-      if (!xml || xml === '<xml></xml>') return [];
-      try {
-        const doc = new DOMParser().parseFromString(xml, 'text/xml');
-        return Array.from(doc.documentElement.children).map(c => ({
-          sender: c.tagName === 'usersend' ? 'user' : 'admin',
-          time: c.querySelector('time')?.textContent || '',
-          message: c.querySelector('message')?.textContent || ''
-        }));
-      } catch(e) { return []; }
-    }
-    function buildXML(msgs) {
-      return `<xml>${msgs.map(m => {
-        const t = m.sender === 'user' ? 'usersend' : 'adminsend';
-        return `<${t}><time>${m.time}</time><message>${esc(m.message)}</message></${t}>`;
-      }).join('')}</xml>`;
-    }
-    function esc(s) {
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-              .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-    }
-    function nowTs() {
-      const d = new Date();
-      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}/${p(d.getHours())}:${p(d.getMinutes())}`;
-    }
-    function p(n) { return String(n).padStart(2,'0'); }
-
-    async function loadChat() {
-      const row = await apiGet(chatId);
-      if (!row) { await apiUpsert(chatId, '<xml></xml>'); messages = []; }
-      else messages = parseXML(row.chatdata);
-      renderPanelBody();
-      startPolling();
-    }
-
-    function startPolling() {
-      if (polling) clearInterval(polling);
-      polling = setInterval(async () => {
-        if (!chatId) return;
-        const row = await apiGet(chatId);
-        if (!row) return;
-        const fresh = parseXML(row.chatdata);
-        if (fresh.length !== messages.length) {
-          const newAdminMsgs = fresh.slice(messages.length).filter(m => m.sender === 'admin');
-          messages = fresh;
-          renderPanelBody();
-          if (newAdminMsgs.length > 0 && !isOpen) {
-            document.getElementById('unreadBadge').textContent = newAdminMsgs.length;
-            document.getElementById('unreadBadge').classList.add('show');
-          }
-        }
-      }, 3000);
-    }
-
-    function renderPanelBody() {
-      const body = document.getElementById('panelBody');
-      if (!chatId) {
-        body.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden;';
-        body.innerHTML = `
-          <div class="start-state">
-            <div class="start-card" onclick="startNewChat()">
-              <div class="start-icon">💬</div>
-              <div>
-                <div class="start-card-title">새 대화 시작하기</div>
-                <div class="start-card-sub">지금 바로 문의하세요</div>
-              </div>
-              <svg style="margin-left:auto;color:#94a3b8" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            </div>
-          </div>`;
-        return;
-      }
-
-      const msgsHtml = messages.length === 0
-        ? `<div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#94a3b8;font-size:13px;"><div style="font-size:28px">👋</div>첫 메시지를 보내보세요!</div>`
-        : messages.map((m, i) => {
-          const prev = messages[i-1];
-          const showDate = !prev || prev.time.split('/')[0] !== m.time.split('/')[0];
-          const timeOnly = m.time.split('/')[1] || m.time;
-          if (m.sender === 'user') {
-            return `${showDate ? `<div class="date-divider">${m.time.split('/')[0]}</div>` : ''}
-              <div class="msg-row user">
-                <div class="bubble">${htmlEsc(m.message).replace(/\n/g,'<br>')}</div>
-                <div class="msg-time">${timeOnly}</div>
-              </div>`;
-          } else {
-            return `${showDate ? `<div class="date-divider">${m.time.split('/')[0]}</div>` : ''}
-              <div class="msg-row admin">
-                <div class="msg-with-avatar">
-                  <div class="msg-avatar">CS</div>
-                  <div class="bubble">${htmlEsc(m.message).replace(/\n/g,'<br>')}</div>
-                </div>
-                <div class="msg-time" style="padding-left:33px">${timeOnly}</div>
-              </div>`;
-          }
-        }).join('');
-
-      body.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden;';
-      body.innerHTML = `
-        <div class="messages" id="msgArea">${msgsHtml}</div>
-        <div class="input-area">
-          <div class="input-wrap">
-            <textarea id="userInput" rows="1" placeholder="메시지를 입력하세요..."
-              oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-          </div>
-          <button class="send-btn" id="sendBtn" onclick="sendMsg()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </div>`;
-      scrollBottom();
-    }
-
-    function htmlEsc(s) {
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-    function scrollBottom() {
-      setTimeout(() => {
-        const a = document.getElementById('msgArea');
-        if (a) a.scrollTop = a.scrollHeight;
-      }, 30);
-    }
-
-    async function startNewChat() {
-      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-      chatId = Array.from({length:8}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
-      localStorage.setItem('support_chat_id', chatId);
-      await apiUpsert(chatId, '<xml></xml>');
-      messages = [];
-      renderPanelBody();
-      startPolling();
-    }
-
-    async function sendMsg() {
-      const inp = document.getElementById('userInput');
-      const btn = document.getElementById('sendBtn');
-      const text = inp?.value.trim();
-      if (!text || !chatId) return;
-      btn.disabled = true;
-      inp.value = ''; inp.style.height = 'auto';
-      messages.push({ sender: 'user', time: nowTs(), message: text });
-      renderPanelBody();
-      const ok = await apiUpsert(chatId, buildXML(messages));
-      if (!ok) { messages.pop(); renderPanelBody(); }
-      const b = document.getElementById('sendBtn');
-      if (b) b.disabled = false;
-      document.getElementById('userInput')?.focus();
-    }
-
-    function autoResize(el) {
-      el.style.height = 'auto';
-      el.style.height = Math.min(el.scrollHeight, 90) + 'px';
-    }
-    function handleKey(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-    }
-  </script>
-
-  <!-- Cloudflare Web Analytics -->
-  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "efd9c983839f4e85812411b718e25aa9"}'></script>
+  ChannelIO('boot', {
+    "pluginKey": "e50c227d-662c-4c71-b10c-4b19cbb854cf"
+  });
+</script>
+  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "efd9c983839f4e85812411b718e25aa9"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
