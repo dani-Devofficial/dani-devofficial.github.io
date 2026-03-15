@@ -1,122 +1,226 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>Danisw</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #141e30, #243b55);
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    header {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-    header h1 a {
-      color: #fff;
-      text-decoration: none;
-      font-size: 1.8rem;
-    }
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    nav a {
-      color: #fff;
-      text-decoration: none;
-      font-weight: bold;
-      transition: 0.3s;
-    }
-    nav a:hover {
-      color: #0ff;
-    }
-    nav input {
-      padding: 0.4rem 0.8rem;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-      width: 150px;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      padding: 2rem;
-    }
-    .glass {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      padding: 2rem 3rem;
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      text-align: center;
-    }
-    .glass h2 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    .glass p {
-      font-size: 1.2rem;
-    }
-  </style>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-1MG9LL3TXV"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-1MG9LL3TXV');
-</script>
-</head>
-<body>
-  <header>
-    <h1><a href="index.html">Dani</a></h1>
-    <nav>
-      <a href="index.html">홈</a>
-      <a href="apps.html">APPS</a>
-      <a href="api.html">Devlopers</a>
-      <a href="notice.html">공지사항</a>
-      <input type="text" placeholder="🔍 검색..." />
-    </nav>
-  </header>
-  <main>
-    <section class="glass">
-      <h2>Dani</h2>
-      <p>초딩 Programer</p>
-    </section>
-  </main>
-  <script>
-    // 검색창 기능은 나중에 추가할 수 있어!
-    console.log("DANI 홈페이지 로딩 완료 🎉");
-  </script>
-  <script>
-  (function(){var w=window;if(w.ChannelIO){return w.console.error("ChannelIO script included twice.");}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement("script");s.type="text/javascript";s.async=true;s.src="https://cdn.channel.io/plugin/ch-plugin-web.js";var x=document.getElementsByTagName("script")[0];if(x.parentNode){x.parentNode.insertBefore(s,x);}}if(document.readyState==="complete"){l();}else{w.addEventListener("DOMContentLoaded",l);w.addEventListener("load",l);}})();
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Danisw</title>
 
-  ChannelIO('boot', {
-    "pluginKey": "e50c227d-662c-4c71-b10c-4b19cbb854cf"
-  });
+<style>
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
+
+body{
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(135deg,#141e30,#243b55);
+color:white;
+min-height:100vh;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+header{
+width:100%;
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:1rem 2rem;
+box-shadow:0 2px 10px rgba(0,0,0,0.3);
+}
+
+header h1 a{
+color:#fff;
+text-decoration:none;
+font-size:1.8rem;
+}
+
+nav{
+display:flex;
+align-items:center;
+gap:1rem;
+}
+
+nav a{
+color:#fff;
+text-decoration:none;
+font-weight:bold;
+transition:0.3s;
+}
+
+nav a:hover{
+color:#0ff;
+}
+
+nav input{
+padding:0.4rem 0.8rem;
+border-radius:10px;
+border:none;
+outline:none;
+background:rgba(255,255,255,0.2);
+color:#fff;
+width:150px;
+}
+
+main{
+flex:1;
+display:flex;
+justify-content:center;
+align-items:center;
+width:100%;
+padding:2rem;
+}
+
+.glass{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+padding:2rem 3rem;
+border-radius:20px;
+box-shadow:0 8px 32px rgba(0,0,0,0.3);
+text-align:center;
+}
+
+.glass h2{
+font-size:2rem;
+margin-bottom:1rem;
+}
+
+.glass p{
+font-size:1.2rem;
+}
+
+
+/* 팝업 */
+
+.popup-overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.6);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.popup{
+position:relative;
+width:420px;
+max-width:90%;
+padding:2rem;
+border-radius:22px;
+background:linear-gradient(180deg,#05081f,#1b0843,#4b139b);
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
+text-align:center;
+}
+
+/* X 버튼 */
+
+.close-btn{
+position:absolute;
+top:10px;
+right:14px;
+font-size:24px;
+cursor:pointer;
+background:none;
+border:none;
+color:white;
+}
+
+/* 타이틀 */
+
+.popup-title{
+font-size:2.4rem;
+font-weight:900;
+margin-bottom:1rem;
+color:#b7a3ff;
+}
+
+.popup-title span{
+color:white;
+}
+
+.badge{
+font-size:70px;
+margin:15px 0;
+}
+
+.donate-text{
+font-size:1rem;
+line-height:1.7;
+}
+
+.donate-text strong{
+color:#fff;
+}
+
+.hidden{
+display:none;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<header>
+<h1><a href="index.html">Dani</a></h1>
+
+<nav>
+<a href="index.html">홈</a>
+<a href="apps.html">APPS</a>
+<a href="api.html">Developers</a>
+<a href="notice.html">공지사항</a>
+<input type="text" placeholder="🔍 검색..."/>
+</nav>
+</header>
+
+
+<main>
+<section class="glass">
+<h2>Dani</h2>
+<p>초딩 Programer</p>
+</section>
+</main>
+
+
+<!-- 팝업 -->
+
+<div class="popup-overlay" id="popup">
+
+<div class="popup">
+
+<button class="close-btn" onclick="closePopup()">✕</button>
+
+<div class="popup-title">
+사이트 운영과<br>
+<span>개발을 응원해주세요</span>
+</div>
+
+<div class="badge">☕</div>
+
+<div class="donate-text">
+사이트 운영과 개발을 응원하고 싶다면<br>
+<strong>토스뱅크 1908-1218-3479</strong> 로<br>
+커피 한 잔 후원 부탁드려요 ☕
+</div>
+
+</div>
+</div>
+
+
+<script>
+
+function closePopup(){
+document.getElementById("popup").classList.add("hidden");
+}
+
 </script>
-  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "efd9c983839f4e85812411b718e25aa9"}'></script><!-- End Cloudflare Web Analytics -->
+
 </body>
 </html>
