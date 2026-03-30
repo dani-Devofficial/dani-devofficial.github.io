@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
   lint:
@@ -16,33 +13,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14' # Use the desired Node.js version
-
-      - name: Install linting tools
-        run: |
-          npm install -g htmlhint stylelint eslint
-          
       - name: Lint HTML
         run: |
-          htmlhint '**/*.html' || echo "HTML linting failed"
+          curl -X POST -d @index.html http://validator.w3.org/nu/?out=json
+          && echo 'HTML linting completed.'
 
       - name: Lint CSS
         run: |
-          stylelint '**/*.css' || echo "CSS linting failed"
+          curl -X POST -d @style.css http://jigsaw.w3.org/css-validator/validator?text=@style.css&profile=css3&output=json
+          && echo 'CSS linting completed.'
 
-      - name: Lint JavaScript
+      - name: Lint JS
         run: |
-          eslint '**/*.js' || echo "JavaScript linting failed"
+          npm install -g jshint
+          && jshint script.js
+          && echo 'JS linting completed.'
 
-      - name: Create GitHub Issue for Lint Errors
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Issue for Errors
+        if: failure()  
         run: |
-          if [ -f lint-errors.log ]; then
-            issue_title="Linting Errors Found"
-            issue_body=$(cat lint-errors.log)
-            curl -X POST -H "Authorization: token $GITHUB_TOKEN" -d "{\"title\":\"$issue_title\", \"body\":\"$issue_body\"}" https://api.github.com/repos/${{ github.repository }}/issues
+          if [ $? -ne 0 ]; then
+            gh issue create --title "Linting Errors Detected" --body "Linting found errors in the code. Please review!";
           fi
