@@ -1,4 +1,4 @@
-name: Lint and Create Issue
+name: html,css,js 오류 검사
 
 on:
   push:
