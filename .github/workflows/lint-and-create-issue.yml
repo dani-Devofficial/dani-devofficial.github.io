@@ -1,0 +1,48 @@
+name: Lint and Create Issue
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14' # Use the desired Node.js version
+
+      - name: Install linting tools
+        run: |
+          npm install -g htmlhint stylelint eslint
+          
+      - name: Lint HTML
+        run: |
+          htmlhint '**/*.html' || echo "HTML linting failed"
+
+      - name: Lint CSS
+        run: |
+          stylelint '**/*.css' || echo "CSS linting failed"
+
+      - name: Lint JavaScript
+        run: |
+          eslint '**/*.js' || echo "JavaScript linting failed"
+
+      - name: Create GitHub Issue for Lint Errors
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f lint-errors.log ]; then
+            issue_title="Linting Errors Found"
+            issue_body=$(cat lint-errors.log)
+            curl -X POST -H "Authorization: token $GITHUB_TOKEN" -d "{\"title\":\"$issue_title\", \"body\":\"$issue_body\"}" https://api.github.com/repos/${{ github.repository }}/issues
+          fi
