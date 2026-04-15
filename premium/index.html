@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dani Premium</title>
+
+<style>
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#f5f7fb;
+color:#222;
+}
+
+header{
+width:100%;
+padding:1rem 2rem;
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:white;
+box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+header a{
+text-decoration:none;
+color:#333;
+font-weight:bold;
+}
+
+.container{
+text-align:center;
+padding:3rem 1rem;
+}
+
+h1{
+font-size:2.5rem;
+margin-bottom:10px;
+}
+
+.subtitle{
+color:#666;
+margin-bottom:30px;
+}
+
+.cards{
+display:flex;
+justify-content:center;
+gap:20px;
+flex-wrap:wrap;
+}
+
+.card{
+background:white;
+padding:2rem;
+border-radius:16px;
+width:260px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+transition:0.2s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+}
+
+.card h2{
+margin-bottom:10px;
+}
+
+.price{
+font-size:1.8rem;
+margin:15px 0;
+color:#4a6cff;
+font-weight:bold;
+}
+
+ul{
+list-style:none;
+padding:0;
+text-align:left;
+}
+
+li{
+margin:8px 0;
+}
+
+button{
+margin-top:15px;
+padding:10px;
+width:100%;
+border:none;
+border-radius:10px;
+background:#4a6cff;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+button:hover{
+opacity:0.85;
+}
+
+.highlight{
+border:2px solid #4a6cff;
+transform:scale(1.05);
+}
+
+.current{
+background:#ddd;
+cursor:default;
+}
+
+.badge{
+display:inline-block;
+background:#4a6cff;
+color:white;
+font-size:12px;
+padding:3px 8px;
+border-radius:10px;
+margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<a href="../index.html">← Dani</a>
+<a href="#">로그인</a>
+</header>
+
+<div class="container">
+<h1>Dani Premium</h1>
+<p class="subtitle">더 빠르고, 더 강력하게 🚀</p>
+
+<div class="cards">
+
+<!-- FREE -->
+<div class="card">
+<h2>Free</h2>
+<div class="price">0원</div>
+<ul>
+<li>✔ fv 하루 10회</li>
+<li>✔ 지연 많음</li>
+</ul>
+<button class="current">현재 플랜</button>
+</div>
+
+<!-- BASIC -->
+<div class="card">
+<h2>Basic</h2>
+<div class="price">₩1000</div>
+<ul>
+<li>✔ fv 하루 50회</li>
+<li>✔ 지연 감소</li>
+<li>✔ 추가 기능 예정</li>
+</ul>
+<button onclick="buy('basic')">구매하기</button>
+</div>
+
+<!-- PREMIUM -->
+<div class="card highlight">
+<div class="badge">추천</div>
+<h2>Premium</h2>
+<div class="price">₩3500</div>
+<ul>
+<li>✔ fv 무제한</li>
+<li>✔ 최고 속도</li>
+<li>✔ 추가 기능 예정</li>
+</ul>
+<button onclick="buy('premium')">구매하기</button>
+</div>
+
+</div>
+</div>
+
+<script>
+function buy(plan){
+  window.location.href = "./buy.html?plan=" + plan;
+}
+</script>
+
+</body>
+</html>
