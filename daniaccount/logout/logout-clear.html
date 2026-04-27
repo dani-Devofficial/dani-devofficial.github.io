@@ -3,111 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로그아웃 완료</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>로그아웃 완료 – Dani</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: #f4f4f2;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .card {
-    background: #fff;
-    border-radius: 16px;
-    border: 0.5px solid #ddd;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 420px;
-    text-align: center;
-    animation: fadeUp 0.4s ease both;
-  }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+.login-card {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  padding: 2.5rem 3rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid rgba(255,255,255,0.10);
+  text-align: center;
+  animation: fadeUp 0.4s ease both;
+}
 
-  .icon-wrap {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: #F2F4F7;
-    border: 0.5px solid #D0D5DD;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1.5rem;
-    animation: pop 0.4s 0.15s ease both;
-  }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  @keyframes pop {
-    from { transform: scale(0.7); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
-  }
+.icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(0,255,255,0.12);
+  border: 1px solid rgba(0,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  animation: pop 0.4s 0.15s ease both;
+}
 
-  .icon-wrap svg {
-    width: 24px;
-    height: 24px;
-  }
+@keyframes pop {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
 
-  .page-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 24px;
-    color: #111;
-    margin-bottom: 8px;
-    letter-spacing: -0.3px;
-  }
+.icon-wrap svg { width: 24px; height: 24px; }
 
-  .page-sub {
-    font-size: 13px;
-    color: #888;
-    font-weight: 300;
-    line-height: 1.6;
-    margin-bottom: 2rem;
-  }
+.login-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.3px;
+}
 
-  .btn-primary {
-    width: 100%;
-    height: 44px;
-    background: #185FA5;
-    color: #E6F1FB;
-    border: none;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    letter-spacing: 0.02em;
-  }
+.login-sub {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
 
-  .btn-primary:hover { background: #0C447C; }
-  .btn-primary:active { transform: scale(0.98); }
+.btn-primary {
+  display: block;
+  width: 100%;
+  height: 46px;
+  background: rgba(0,255,255,0.18);
+  color: #fff;
+  border: 1px solid rgba(0,255,255,0.5);
+  border-radius: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  line-height: 46px;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  background: rgba(0,255,255,0.3);
+  box-shadow: 0 0 20px rgba(0,255,255,0.25);
+}
+
+.btn-primary:active { transform: scale(0.98); }
+
 </style>
 </head>
 <body>
-  <div class="card">
+  <div class="login-card">
     <div class="icon-wrap">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M16 17L21 12L16 7" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M21 12H9" stroke="#667085" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="rgba(0,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M16 17L21 12L16 7" stroke="rgba(0,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M21 12H9" stroke="rgba(0,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
 
-    <p class="page-title">로그아웃 완료</p>
-    <p class="page-sub">성공적으로 로그아웃되었습니다.<br>다음에 또 만나요!</p>
+    <p class="login-title">로그아웃 완료</p>
+    <p class="login-sub">성공적으로 로그아웃되었습니다.<br>다음에 또 만나요!</p>
 
-    <a href=".../index.html">
-      <button class="btn-primary">홈으로 돌아가기</button>
-    </a>
+    <a class="btn-primary" href="../../index.html">홈으로 돌아가기</a>
   </div>
 </body>
 </html>
