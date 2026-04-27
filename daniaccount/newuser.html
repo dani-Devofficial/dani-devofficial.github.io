@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회원가입</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f4f4f2;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    border: 0.5px solid #ddd;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: #111;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+
+  .page-sub {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 2rem;
+    font-weight: 300;
+  }
+
+  .form-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: #666;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+
+  input[type=email],
+  input[type=password],
+  input[type=text] {
+    width: 100%;
+    padding: 0 12px;
+    height: 42px;
+    border: 0.5px solid #ccc;
+    border-radius: 8px;
+    background: #fafafa;
+    color: #111;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input:focus {
+    border-color: #378ADD;
+    box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.12);
+    background: #fff;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 5px;
+    display: block;
+  }
+
+  .divider {
+    height: 0.5px;
+    background: #eee;
+    margin: 1.4rem 0;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 0.9rem;
+  }
+
+  .checkbox-row input[type=checkbox] {
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: #185FA5;
+  }
+
+  .checkbox-row label {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  .checkbox-row label a {
+    color: #378ADD;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    width: 100%;
+    height: 44px;
+    background: #185FA5;
+    color: #E6F1FB;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+    margin-top: 0.4rem;
+  }
+
+  .btn-primary:hover { background: #0C447C; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .login-text {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-top: 1.5rem;
+  }
+
+  .login-text a {
+    color: #378ADD;
+    text-decoration: none;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <p class="page-title">회원가입</p>
+    <p class="page-sub">무료로 계정을 만들어보세요</p>
+
+    <div class="form-group">
+      <label class="form-label">이메일 (아이디)</label>
+      <input type="email" placeholder="name@example.com">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">비밀번호</label>
+      <input type="password" placeholder="••••••••">
+      <span class="hint">영문, 숫자 포함 8자 이상</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">비밀번호 확인</label>
+      <input type="password" placeholder="••••••••">
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="terms">
+      <label for="terms"><a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의합니다. (필수)</label>
+    </div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="marketing">
+      <label for="marketing">마케팅 정보 수신에 동의합니다. (선택)</label>
+    </div>
+
+    <button class="btn-primary">회원가입</button>
+
+    <p class="login-text">이미 계정이 있으신가요? <a href="#">로그인</a></p>
+  </div>
+</body>
+</html>
