@@ -3,144 +3,180 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>로그인</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>로그인 – Dani</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: #f4f4f2;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  .card {
-    background: #fff;
-    border-radius: 16px;
-    border: 0.5px solid #ddd;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 420px;
-  }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-  .page-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 26px;
-    color: #111;
-    margin-bottom: 4px;
-    letter-spacing: -0.3px;
-  }
+/* ── 메인 ── */
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 2rem;
+}
 
-  .page-sub {
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 2rem;
-    font-weight: 300;
-  }
+/* ── 로그인 카드 (홈 .glass 스타일 기반) ── */
+.login-card {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  padding: 2.5rem 3rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid rgba(255,255,255,0.10);
+}
 
-  .form-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    color: #666;
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 6px;
-  }
+.login-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.3px;
+}
 
-  .form-group {
-    margin-bottom: 1.2rem;
-  }
+.login-sub {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 2rem;
+}
 
-  input[type=email],
-  input[type=password] {
-    width: 100%;
-    padding: 0 12px;
-    height: 42px;
-    border: 0.5px solid #ccc;
-    border-radius: 8px;
-    background: #fafafa;
-    color: #111;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
+/* ── 폼 ── */
+.form-group {
+  margin-bottom: 1.2rem;
+}
 
-  input:focus {
-    border-color: #378ADD;
-    box-shadow: 0 0 0 3px rgba(55, 138, 221, 0.12);
-    background: #fff;
-  }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 6px;
+}
 
-  .forgot {
-    font-size: 12px;
-    color: #378ADD;
-    text-align: right;
-    display: block;
-    margin-top: 5px;
-    cursor: pointer;
-    text-decoration: none;
-  }
+input[type=email],
+input[type=password] {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
 
-  .checkbox-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 1.4rem;
-  }
+input[type=email]::placeholder,
+input[type=password]::placeholder {
+  color: rgba(255,255,255,0.3);
+}
 
-  .checkbox-row input[type=checkbox] {
-    width: 15px;
-    height: 15px;
-    accent-color: #185FA5;
-  }
+input:focus {
+  border-color: #0ff;
+  box-shadow: 0 0 0 3px rgba(0,255,255,0.12);
+  background: rgba(255,255,255,0.11);
+}
 
-  .checkbox-row label {
-    font-size: 13px;
-    color: #666;
-  }
+.forgot {
+  display: block;
+  font-size: 12px;
+  color: #0ff;
+  text-align: right;
+  margin-top: 6px;
+  text-decoration: none;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+.forgot:hover { opacity: 1; }
 
-  .btn-primary {
-    width: 100%;
-    height: 44px;
-    background: #185FA5;
-    color: #E6F1FB;
-    border: none;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    letter-spacing: 0.02em;
-  }
+/* ── 체크박스 ── */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
 
-  .btn-primary:hover { background: #0C447C; }
-  .btn-primary:active { transform: scale(0.98); }
+.checkbox-row input[type=checkbox] {
+  width: 15px;
+  height: 15px;
+  accent-color: #0ff;
+}
 
-  .signup-text {
-    text-align: center;
-    font-size: 13px;
-    color: #888;
-    margin-top: 1.5rem;
-  }
+.checkbox-row label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+}
 
-  .signup-text a {
-    color: #378ADD;
-    text-decoration: none;
-    font-weight: 500;
-  }
+/* ── 버튼 ── */
+.btn-primary {
+  width: 100%;
+  height: 46px;
+  background: rgba(0,255,255,0.18);
+  color: #fff;
+  border: 1px solid rgba(0,255,255,0.5);
+  border-radius: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  background: rgba(0,255,255,0.3);
+  box-shadow: 0 0 20px rgba(0,255,255,0.25);
+}
+
+.btn-primary:active { transform: scale(0.98); }
+
+/* ── 하단 링크 ── */
+.signup-text {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 1.5rem;
+}
+
+.signup-text a {
+  color: #0ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-text a:hover { text-decoration: underline; }
+
 </style>
 </head>
 <body>
-  <div class="card">
-    <p class="page-title">다시 오셨군요</p>
-    <p class="page-sub">계정에 로그인하세요</p>
+
+<!-- 로그인 카드 -->
+<main>
+  <div class="login-card">
+    <p class="login-title">다시 오셨군요</p>
+    <p class="login-sub">계정에 로그인하세요</p>
 
     <div class="form-group">
       <label class="form-label">이메일</label>
@@ -162,5 +198,7 @@
 
     <p class="signup-text">계정이 없으신가요? <a href="./newuser.html">무료로 가입하기</a></p>
   </div>
+</main>
+
 </body>
 </html>
