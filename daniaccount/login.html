@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>로그인 – Dani</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 
 * {
@@ -22,7 +23,6 @@ body {
   align-items: center;
 }
 
-/* ── 메인 ── */
 main {
   flex: 1;
   display: flex;
@@ -32,7 +32,6 @@ main {
   padding: 2rem;
 }
 
-/* ── 로그인 카드 (홈 .glass 스타일 기반) ── */
 .login-card {
   background: rgba(255,255,255,0.08);
   backdrop-filter: blur(20px);
@@ -57,7 +56,6 @@ main {
   margin-bottom: 2rem;
 }
 
-/* ── 폼 ── */
 .form-group {
   margin-bottom: 1.2rem;
 }
@@ -107,10 +105,14 @@ input:focus {
   text-decoration: none;
   opacity: 0.85;
   transition: opacity 0.2s;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
 }
 .forgot:hover { opacity: 1; }
 
-/* ── 체크박스 ── */
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -129,7 +131,6 @@ input:focus {
   color: rgba(255,255,255,0.6);
 }
 
-/* ── 버튼 ── */
 .btn-primary {
   width: 100%;
   height: 46px;
@@ -143,6 +144,10 @@ input:focus {
   cursor: pointer;
   letter-spacing: 0.04em;
   transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-primary:hover {
@@ -152,7 +157,48 @@ input:focus {
 
 .btn-primary:active { transform: scale(0.98); }
 
-/* ── 하단 링크 ── */
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 에러 / 성공 메시지 */
+.msg {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 1.2rem;
+  display: none;
+}
+
+.msg.error {
+  background: rgba(255, 80, 80, 0.15);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  color: #ff9090;
+}
+
+.msg.success {
+  background: rgba(0, 255, 180, 0.12);
+  border: 1px solid rgba(0, 255, 180, 0.35);
+  color: #7fffd4;
+}
+
+/* 스피너 */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: none;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .signup-text {
   text-align: center;
   font-size: 13px;
@@ -172,21 +218,24 @@ input:focus {
 </head>
 <body>
 
-<!-- 로그인 카드 -->
 <main>
   <div class="login-card">
     <p class="login-title">다시 오셨군요</p>
     <p class="login-sub">계정에 로그인하세요</p>
 
+    <!-- 메시지 영역 -->
+    <div class="msg error" id="errorMsg"></div>
+    <div class="msg success" id="successMsg"></div>
+
     <div class="form-group">
       <label class="form-label">이메일</label>
-      <input type="email" placeholder="name@example.com">
+      <input type="email" id="email" placeholder="name@example.com">
     </div>
 
     <div class="form-group">
       <label class="form-label">비밀번호</label>
-      <input type="password" placeholder="••••••••">
-      <a class="forgot" href="#">비밀번호를 잊으셨나요?</a>
+      <input type="password" id="password" placeholder="••••••••">
+      <button class="forgot" id="forgotBtn" type="button">비밀번호를 잊으셨나요?</button>
     </div>
 
     <div class="checkbox-row">
@@ -194,11 +243,179 @@ input:focus {
       <label for="remember">로그인 상태 유지</label>
     </div>
 
-    <button class="btn-primary">로그인</button>
+    <button class="btn-primary" id="loginBtn">
+      <span class="spinner" id="spinner"></span>
+      <span id="btnText">로그인</span>
+    </button>
 
     <p class="signup-text">계정이 없으신가요? <a href="./newuser.html">무료로 가입하기</a></p>
   </div>
 </main>
+
+<script>
+  // ── Supabase 초기화 ──────────────────────────────────
+  const SUPABASE_URL  = 'https://kbxsqbqglqcxkiprbpqf.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtieHNxYnFnbHFjeGtpcHJicHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNTAzMTksImV4cCI6MjA5MjgyNjMxOX0.t3WZ3Ir8W-Ur26nJBPHiQc0o3Ii8oDStzj4v-FF4BAM';
+  const PERSIST_KEY   = 'dani_remember_me';
+
+  const { createClient } = supabase;
+
+  // "로그인 상태 유지" 여부에 따라 storage 전략 결정
+  // - true  → localStorage  (브라우저 재시작 후에도 세션 유지)
+  // - false → sessionStorage (탭·창 닫으면 세션 소멸)
+  function buildClient() {
+    const remember = localStorage.getItem(PERSIST_KEY) === '1';
+    return createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        storage: remember ? localStorage : sessionStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      }
+    });
+  }
+
+  let sb = buildClient();
+
+  // ── DOM 참조 ──────────────────────────────────────────
+  const emailInput   = document.getElementById('email');
+  const pwInput      = document.getElementById('password');
+  const rememberChk  = document.getElementById('remember');
+  const loginBtn     = document.getElementById('loginBtn');
+  const spinner      = document.getElementById('spinner');
+  const btnText      = document.getElementById('btnText');
+  const errorMsg     = document.getElementById('errorMsg');
+  const successMsg   = document.getElementById('successMsg');
+  const forgotBtn    = document.getElementById('forgotBtn');
+
+  // 체크박스 이전 선택 상태 복원
+  rememberChk.checked = localStorage.getItem(PERSIST_KEY) === '1';
+
+  // ── 메시지 헬퍼 ──────────────────────────────────────
+  function showError(text) {
+    errorMsg.textContent  = text;
+    errorMsg.style.display  = 'block';
+    successMsg.style.display = 'none';
+  }
+
+  function showSuccess(text) {
+    successMsg.textContent  = text;
+    successMsg.style.display  = 'block';
+    errorMsg.style.display    = 'none';
+  }
+
+  function clearMessages() {
+    errorMsg.style.display   = 'none';
+    successMsg.style.display = 'none';
+  }
+
+  function setLoading(on) {
+    loginBtn.disabled      = on;
+    spinner.style.display  = on ? 'block' : 'none';
+    btnText.textContent    = on ? '로그인 중…' : '로그인';
+  }
+
+  // ── 로그인 ─────────────────────────────────────────────
+  loginBtn.addEventListener('click', async () => {
+    clearMessages();
+
+    const email    = emailInput.value.trim();
+    const password = pwInput.value;
+
+    if (!email || !password) {
+      showError('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    // "로그인 상태 유지" 선택을 먼저 저장하고 클라이언트 재생성
+    if (rememberChk.checked) {
+      localStorage.setItem(PERSIST_KEY, '1');
+    } else {
+      localStorage.removeItem(PERSIST_KEY);
+    }
+    sb = buildClient(); // storage 전략 반영
+
+    setLoading(true);
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+    setLoading(false);
+
+    if (error) {
+      const msg = translateError(error.message);
+      showError(msg);
+      return;
+    }
+
+    showSuccess('로그인 성공! 잠시 후 이동합니다…');
+    setTimeout(() => {
+      window.location.href = 'dani.ggm.kr/index.html';
+    }, 1000);
+  });
+
+  // ── 엔터 키 지원 ─────────────────────────────────────
+  [emailInput, pwInput].forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+  });
+
+  // ── 비밀번호 재설정 ──────────────────────────────────
+  forgotBtn.addEventListener('click', async () => {
+    clearMessages();
+
+    const email = emailInput.value.trim();
+    if (!email) {
+      showError('비밀번호를 재설정할 이메일을 먼저 입력해주세요.');
+      emailInput.focus();
+      return;
+    }
+
+    forgotBtn.disabled = true;
+    forgotBtn.textContent = '전송 중…';
+
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password.html'
+    });
+
+    forgotBtn.disabled = false;
+    forgotBtn.textContent = '비밀번호를 잊으셨나요?';
+
+    if (error) {
+      showError(translateError(error.message));
+    } else {
+      showSuccess(`${email} 으로 재설정 링크를 보냈어요. 메일함을 확인해주세요.`);
+    }
+  });
+
+  // ── 이미 로그인 된 경우 바로 이동 (자동 로그인) ──────
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      // 세션이 캐시에 있으면 바로 이동
+      showSuccess('자동 로그인 중…');
+      setTimeout(() => {
+        window.location.href = './index.html';
+      }, 600);
+    }
+  })();
+
+  // ── 에러 메시지 한국어 변환 ───────────────────────────
+  function translateError(msg) {
+    if (!msg) return '알 수 없는 오류가 발생했어요.';
+    if (msg.includes('Invalid login credentials'))
+      return '이메일 또는 비밀번호가 올바르지 않아요.';
+    if (msg.includes('Email not confirmed'))
+      return '이메일 인증이 완료되지 않았어요. 메일함을 확인해주세요.';
+    if (msg.includes('Too many requests'))
+      return '요청이 너무 많아요. 잠시 후 다시 시도해주세요.';
+    if (msg.includes('User not found'))
+      return '존재하지 않는 계정이에요.';
+    if (msg.includes('Network'))
+      return '네트워크 오류가 발생했어요. 인터넷 연결을 확인해주세요.';
+    return msg;
+  }
+</script>
 
 </body>
 </html>
