@@ -1,111 +1,71 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>404 Status Page </title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>404 페이지 - 페이지를 찾을 수 없음</title>
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Arial', sans-serif;
-        background-color: #f5f5f5;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        text-align: center;
-    }
+  @import url('https://fonts.googleapis.com/css2?family=Gugi&display=swap');
 
-    h1 {
-        font-size: 80px;
-        margin: 0;
-    }
+  body {
+    margin: 0; padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1350&q=80') no-repeat center/cover;
+    font-family: 'Gugi', cursive, Arial, sans-serif;
+  }
 
-    p {
-        font-size: 20px;
-        margin: 10px 0 40px 0;
-        color: #666;
-    }
+  .glass {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 60px 80px;
+    text-align: center;
+    color: #ffffff;
+    max-width: 400px;
+  }
 
-    .boxes {
-        display: flex;
-        gap: 40px;
-    }
+  h1 {
+    font-size: 10rem;
+    margin: 0 0 10px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  }
 
-    .box {
-        background-color: #1c1c1c;
-        color: white;
-        padding: 40px 30px;
-        border-radius: 10px;
-        width: 200px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
+  p {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.6);
+  }
 
-    .box img {
-        width: 50px;
-        height: 50px;
-        margin-bottom: 15px;
-    }
+  a {
+    text-decoration: none;
+    color: #00d2ff;
+    font-weight: 700;
+    padding: 12px 30px;
+    border: 2px solid #00d2ff;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    display: inline-block;
+    box-shadow: 0 0 10px #00d2ff;
+  }
 
-    .box h2 {
-        margin: 0 0 10px 0;
-        font-size: 18px;
-    }
-
-    .working {
-        color: #6fffcf;
-        font-weight: bold;
-    }
-
-    .notfound {
-        color: #ffb36b;
-        font-weight: bold;
-    }
+  a:hover {
+    background-color: #00d2ff;
+    color: #111;
+    box-shadow: 0 0 20px #00d2ff;
+  }
 </style>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-1MG9LL3TXV"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-1MG9LL3TXV');
-</script>
 </head>
 <body>
-
-<h1>404</h1>
-<p>No active service</p>
-
-<div class="boxes">
-    <div class="box">
-        <img src="https://img.icons8.com/?size=96&id=MdMvE4eOwipK&format=png" alt="Browser Icon"/>
-        <h2>YOUR BROWSER</h2>
-        <span class="working">WORKING</span>
-    </div>
-
-    <div class="box">
-        <img src="https://search.pstatic.net/sunny?src=https%3A%2F%2Fwww.netlify.com%2Ffavicon%2Ffavicon.ico&type=f30_30_png_expire24" alt="Netlify Logo"/>
-        <h2>NETLIFY SERVER</h2>
-        <span class="working">WORKING</span>
-    </div>
-
-    <div class="box">
-        <img src="https://img.icons8.com/ios-filled/50/ffb36b/server.png" alt="Site Icon"/>
-        <h2>SITE</h2>
-        <span class="notfound">CAN'T FIND THE SITE</span>
-    </div>
-</div>
-<script>
-  (function(){var w=window;if(w.ChannelIO){return w.console.error("ChannelIO script included twice.");}var ch=function(){ch.c(arguments);};ch.q=[];ch.c=function(args){ch.q.push(args);};w.ChannelIO=ch;function l(){if(w.ChannelIOInitialized){return;}w.ChannelIOInitialized=true;var s=document.createElement("script");s.type="text/javascript";s.async=true;s.src="https://cdn.channel.io/plugin/ch-plugin-web.js";var x=document.getElementsByTagName("script")[0];if(x.parentNode){x.parentNode.insertBefore(s,x);}}if(document.readyState==="complete"){l();}else{w.addEventListener("DOMContentLoaded",l);w.addEventListener("load",l);}})();
-
-  ChannelIO('boot', {
-    "pluginKey": "e50c227d-662c-4c71-b10c-4b19cbb854cf"
-  });
-</script>
+  <div class="glass">
+    <h1>404</h1>
+    <p>페이지를 찾을 수 없어요! 😢</p>
+    <a href="index.html">홈으로 돌아가기</a>
+  </div>
 </body>
 </html>
