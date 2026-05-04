@@ -1,0 +1,13 @@
+name: Visit dani.ggm.kr on Windows Commit
+
+on:
+  push:
+
+jobs.ggm.kr, print message, and exit after 1 second
+        shell: powershell
+        run: |
+          echo "Booted Windows runner"
+          Invoke-WebRequest http://dani.ggm.kr | Out-Null
+          echo "방문 완료: dani.ggm.kr"
+          Start-Sleep -Seconds 1
+          echo "Exiting workflow"
