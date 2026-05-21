@@ -1,5 +1,6 @@
 # .github/workflows/virustotal-scan.yml
-name: VirusTotal Scan on Push
+
+name: VirusTotal Scan
 
 on:
   push:
@@ -9,7 +10,7 @@ permissions:
   issues: write
 
 jobs:
-  scan:
+  virustotal:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,64 +18,98 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq zip
-
-      - name: Compress repository
         run: |
-          zip -r repo.zip . \
-            -x ".git/*" \
-            -x ".github/*"
+          sudo apt-get update
+          sudo apt-get install -y jq
 
-      - name: Upload to VirusTotal
-        id: vt
+      - name: Scan all files with VirusTotal
+        id: scan
         env:
           VT_API_KEY: ${{ secrets.VT_API_KEY }}
         run: |
-          RESPONSE=$(curl -s --request POST \
-            --url https://www.virustotal.com/api/v3/files \
-            --header "x-apikey: $VT_API_KEY" \
-            --form file=@repo.zip)
+          MALWARE_FOUND=0
+          REPORT=""
 
-          echo "$RESPONSE"
+          find . -type f \
+            ! -path "./.git/*" \
+            ! -path "./.github/*" \
+            | while read FILE; do
 
-          ANALYSIS_ID=$(echo "$RESPONSE" | jq -r '.data.id')
+              SIZE=$(stat -c%s "$FILE")
 
-          echo "analysis_id=$ANALYSIS_ID" >> $GITHUB_OUTPUT
+              # VirusTotal 무료 API 업로드 제한 회피 (32MB)
+              if [ "$SIZE" -gt 32000000 ]; then
+                echo "Skipping large file: $FILE"
+                continue
+              fi
 
-      - name: Wait for analysis
-        run: sleep 30
+              echo "Scanning: $FILE"
 
-      - name: Get result
-        id: result
-        env:
-          VT_API_KEY: ${{ secrets.VT_API_KEY }}
-        run: |
-          RESULT=$(curl -s --request GET \
-            --url https://www.virustotal.com/api/v3/analyses/${{ steps.vt.outputs.analysis_id }} \
-            --header "x-apikey: $VT_API_KEY")
+              RESPONSE=$(curl -s --request POST \
+                --url https://www.virustotal.com/api/v3/files \
+                --header "x-apikey: $VT_API_KEY" \
+                --form file=@"$FILE")
 
-          echo "$RESULT"
+              # 업로드 실패 대응
+              if ! echo "$RESPONSE" | jq . >/dev/null 2>&1; then
+                echo "Invalid response for $FILE"
+                continue
+              fi
 
-          MALICIOUS=$(echo "$RESULT" | jq '.data.attributes.stats.malicious')
+              ANALYSIS_ID=$(echo "$RESPONSE" | jq -r '.data.id')
 
-          echo "malicious=$MALICIOUS" >> $GITHUB_OUTPUT
+              if [ "$ANALYSIS_ID" = "null" ] || [ -z "$ANALYSIS_ID" ]; then
+                echo "Upload failed: $FILE"
+                continue
+              fi
 
-      - name: Create GitHub Issue if malware detected
-        if: steps.result.outputs.malicious != '0'
+              sleep 15
+
+              RESULT=$(curl -s --request GET \
+                --url https://www.virustotal.com/api/v3/analyses/$ANALYSIS_ID \
+                --header "x-apikey: $VT_API_KEY")
+
+              if ! echo "$RESULT" | jq . >/dev/null 2>&1; then
+                echo "Invalid analysis result for $FILE"
+                continue
+              fi
+
+              MALICIOUS=$(echo "$RESULT" | jq '.data.attributes.stats.malicious')
+
+              echo "$FILE => malicious: $MALICIOUS"
+
+              if [ "$MALICIOUS" -gt 0 ]; then
+                MALWARE_FOUND=1
+                REPORT="${REPORT}\n- ${FILE} : ${MALICIOUS} detections"
+              fi
+
+            done
+
+          echo "malware_found=$MALWARE_FOUND" >> $GITHUB_OUTPUT
+
+          {
+            echo 'report<<EOF'
+            echo -e "$REPORT"
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Issue
+        if: steps.scan.outputs.malware_found == '1'
         uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: "⚠️ VirusTotal detected malware",
+              title: "⚠️ VirusTotal detected suspicious files",
               body: `
-              VirusTotal detected malicious content.
+              VirusTotal found suspicious files.
 
-              Repository: ${context.repo.owner}/${context.repo.repo}
-              Commit: ${context.sha}
+              Commit:
+              ${context.sha}
 
-              Malicious detections: ${{ steps.result.outputs.malicious }}
+              Findings:
+              ${{ steps.scan.outputs.report }}
 
               Workflow Run:
               https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
