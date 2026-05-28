@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hCaptcha + Supabase 연동</title>
+    <title>인증이 필요합니다.</title>
     <!-- hCaptcha 공식 스크립트 로드 -->
     <script src="https://hcaptcha.com" async defer></script>
     <style>
@@ -16,14 +16,14 @@
 </head>
 <body>
 
-    <h2>온라인 hCaptcha 인증 테스트</h2>
+    <h2>인증이 필요합니다.</h2>
     
     <form id="captchaForm">
         <!-- 1. 발급받은 hCaptcha Site Key 입력 -->
         <div class="h-captcha" data-sitekey="1948c522-5106-4060-b554-0b201648de0a" data-callback="onCaptchaSuccess"></div>
         
         <!-- 처음에는 비활성화, 캡차 완료 시 활성화 -->
-        <button type="submit" id="submitBtn" disabled>인증서버로 전송</button>
+        <button type="submit" id="submitBtn" disabled>사이트로 이동하기</button>
     </form>
 
     <script>
@@ -58,7 +58,9 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    alert("✅ 인증 성공! 당신은 봇이 아닙니다.");
+                    alert("✅ 인증 성공");
+                    window.location.replace("https://dani.ggm.kr/site_index.html")
+
                 } else {
                     alert("❌ 인증 실패! 다시 시도해주세요.");
                 }
