@@ -91,16 +91,15 @@
           // -------------------------------------------------------------
           // ⏱️ [핵심 기능] 판정 후 5초 뒤 주소 변경
           // -------------------------------------------------------------
-          setTimeout(() => {
-            // 주소 끝에 결과 파라미터(?age=...&gender=...)를 붙여서 변경
-            // 예: http://.../index.html?age=25&gender=male
-            const newUrl = `{age}&{gender}`;
-            
-            // 또는 앱인벤터 통신 전용 해시(#)로 주소 변경
-            // const newUrl = window.location.pathname + `#age=${age}&gender=${gender}`;
-
-            window.location.href = newUrl;
-          }, 5000); // 5000ms = 5초
+        // 판정 끝나고 5초 뒤 실행
+        setTimeout(() => {
+          const data = `${age}&${gender}`; // 예: "25&male"
+          
+          // 앱인벤터로 텍스트 직접 전송!
+          if (window.AppInventor && window.AppInventor.setWebViewString) {
+            window.AppInventor.setWebViewString(data);
+          }
+        }, 5000);
 
         } else {
           resultEl.innerText = "얼굴을 감지하지 못했습니다. 다시 시도해 주세요.";
