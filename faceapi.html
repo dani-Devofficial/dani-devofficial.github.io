@@ -32,6 +32,8 @@
         mesh: { enabled: true },
         iris: { enabled: false },
         description: { enabled: true },
+        age: { enabled: true },       // 👈 나이 분석 모델 활성화
+        gender: { enabled: true },    // 👈 성별 분석 모델 활성화
         emotion: { enabled: false }
       },
       body: { enabled: false },
@@ -45,7 +47,16 @@
 
     async function main() {
       try {
-        resultEl.innerText = "1/3. AI 모델 로드 중...";
+        // -------------------------------------------------------------
+        // 🧹 [추가된 기능] 기존 브라우저 캐시 및 저장소 완전 삭제
+        // -------------------------------------------------------------
+        resultEl.innerText = "0/3. 이전 캐시 삭제 중...";
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+
+        resultEl.innerText = "1/3. 최신 AI 모델 로드 중...";
         await human.load();
 
         resultEl.innerText = "2/3. 카메라 연결 중...";
@@ -88,18 +99,14 @@
 
           resultEl.innerText = `[인식 성공]\n나이: 약 ${age}세 / 성별: ${gender}\n(5초 뒤 결과 주소로 이동합니다...)`;
 
-          // -------------------------------------------------------------
-          // ⏱️ [핵심 기능] 판정 후 5초 뒤 주소 변경
-          // -------------------------------------------------------------
-        // 판정 끝나고 5초 뒤 실행
-        setTimeout(() => {
-          const data = `${age}&${gender}`; // 예: "25&male"
-          
-          // 앱인벤터로 텍스트 직접 전송!
-          if (window.AppInventor && window.AppInventor.setWebViewString) {
-            window.AppInventor.setWebViewString(data);
-          }
-        }, 5000);
+          // 5초 뒤 앱인벤터로 데이터 전달
+          setTimeout(() => {
+            const data = `${age}&${gender}`;
+            
+            if (window.AppInventor && window.AppInventor.setWebViewString) {
+              window.AppInventor.setWebViewString(data);
+            }
+          }, 5000);
 
         } else {
           resultEl.innerText = "얼굴을 감지하지 못했습니다. 다시 시도해 주세요.";
