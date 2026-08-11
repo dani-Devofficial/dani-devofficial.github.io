@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DaniDevLab</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap');
+
+  :root{
+    --bg: #f4f4f5;
+    --card-bg: #ececee;
+    --text-main: #18181b;
+    --text-sub: #71717a;
+    --text-faint: #a1a1aa;
+    --border: #e4e4e7;
+    --radius: 20px;
+    --purple: #8b7cf6;
+    --purple-dark: #7c6ff2;
+    --blue: #2f6fed;
+    --gold: #d98f2b;
+    --gold-bg: #f6e3c2;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+
+  html,body{
+    background: var(--bg);
+    color: var(--text-main);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 64px 24px 120px;
+  }
+
+  /* ---------- Header ---------- */
+  .header{
+    margin-bottom: 40px;
+  }
+  .header h1{
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
+  }
+  .wave{
+    display: inline-block;
+    transform-origin: 70% 70%;
+    animation: wave 2.4s infinite;
+  }
+  @keyframes wave{
+    0%,60%,100%{ transform: rotate(0deg); }
+    10%{ transform: rotate(14deg); }
+    20%{ transform: rotate(-8deg); }
+    30%{ transform: rotate(14deg); }
+    40%{ transform: rotate(-4deg); }
+    50%{ transform: rotate(10deg); }
+  }
+  .header p.sub{
+    margin-top: 14px;
+    font-size: 15.5px;
+    color: var(--text-sub);
+  }
+  .header nav{
+    margin-top: 20px;
+    display:flex;
+    gap: 20px;
+    font-size: 15px;
+    color: var(--text-main);
+  }
+  .header nav a{
+    color: var(--text-main);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--text-faint);
+  }
+  .header nav a:hover{ color: var(--purple); }
+
+  /* ---------- Grid ---------- */
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 40px;
+  }
+  .card{
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    display:flex;
+    flex-direction: column;
+  }
+  .card-title{
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* ---------- Skills card ---------- */
+  .skills-card{
+    min-height: 280px;
+    gap: 18px;
+  }
+  .skills-card h2{
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .skill-group{
+    display:flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .skill-label{
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+  }
+  .chip-row{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+  .chip.faint{
+    color: var(--text-faint);
+    background: #f7f7f8;
+  }
+  .chip .dot{
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 9px;
+    color: #fff;
+    font-weight: 800;
+  }
+  .scroll-hint{
+    margin-top: auto;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-faint);
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  /* ---------- Education card ---------- */
+  .edu-card .tabs{
+    display:flex;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .tab{
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+    border: none;
+  }
+  .tab.active{
+    background: var(--text-main);
+    color: #fff;
+  }
+  .timeline{
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before{
+    content:'';
+    position:absolute;
+    left: 9px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--border);
+  }
+  .tl-item{
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .tl-item:last-child{ margin-bottom: 0; }
+  .tl-icon{
+    position:absolute;
+    left: -28px;
+    top: 0;
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 11px;
+  }
+  .tl-title{ font-size: 15px; font-weight: 700; }
+  .tl-sub{ font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
+
+  /* ---------- TMI card ---------- */
+  .tmi-card{
+    color: var(--text-main);
+  }
+  .tmi-card .card-title{ color: var(--text-sub); margin-bottom: 14px; }
+  .tmi-text{
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.55;
+    letter-spacing: -0.3px;
+  }
+  .tmi-text b{ font-weight: 800; }
+  .tmi-text .emoji-box{
+    display:inline-flex;
+    width: 24px; height:24px;
+    background: var(--text-main);
+    color:#fff;
+    border-radius: 6px;
+    align-items:center; justify-content:center;
+    font-size: 13px;
+    vertical-align: -5px;
+    margin: 0 1px;
+  }
+  .tmi-text .emoji-circle{
+    display:inline-flex;
+    width: 24px; height:24px;
+    background: #3b82f6;
+    color:#fff;
+    border-radius: 50%;
+    align-items:center; justify-content:center;
+    font-size: 13px;
+    vertical-align: -5px;
+    margin: 0 1px;
+  }
+  .refresh-btn{
+    margin-top: auto;
+    align-self: flex-end;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-sub);
+    transition: transform .4s ease;
+  }
+  .refresh-btn:hover{ background: #f7f7f8; }
+  .refresh-btn.spin{ transform: rotate(180deg); }
+
+  /* ---------- Painting / Avatar card ---------- */
+  .avatar-card{
+    padding: 0;
+    min-height: 320px;
+    justify-content: flex-end;
+  }
+  .avatar-img{
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1;
+    border-radius: var(--radius) var(--radius) 0 0;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, #2d3a52 0%, #16202f 60%, #0e1622 100%);
+  }
+  .avatar-img svg{ width:100%; height:100%; display:block; }
+  .avatar-caption{
+    padding: 14px 20px;
+    font-size: 12px;
+    color: var(--text-faint);
+    display:flex;
+    align-items:center;
+    gap: 6px;
+  }
+
+  /* ---------- GitHub stats card ---------- */
+  .gh-card .gh-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content: space-between;
+  }
+  .gh-card h2{ font-size: 19px; font-weight: 800; }
+  .gh-handle{ font-size: 13px; color: var(--text-sub); margin-top: 4px; }
+  .add-btn{
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size: 15px;
+    color: var(--text-sub);
+    flex-shrink: 0;
+  }
+  .gh-recent{
+    margin-top: 34px;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .gh-commits{
+    font-size: 24px;
+    font-weight: 800;
+    margin: 4px 0 14px;
+  }
+  .gh-commits span{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+    margin-left: 2px;
+  }
+  .contrib-grid{
+    display:grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 4px;
+  }
+  .contrib-cell{
+    width: 100%;
+    aspect-ratio: 1/1;
+    border-radius: 3px;
+    background: #e4e4e7;
+  }
+  .contrib-cell.l1{ background:#c7f0cf; }
+  .contrib-cell.l2{ background:#7fdb96; }
+  .contrib-cell.l3{ background:#34b855; }
+  .contrib-cell.l4{ background:#1c7d37; }
+
+  /* ---------- PS practice card ---------- */
+  .ps-card h2{ font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+  .ps-card p{
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-sub);
+  }
+  .badge-box{
+    margin-top: auto;
+    background: var(--gold-bg);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display:flex;
+    align-items:center;
+    gap: 12px;
+  }
+  .badge-icon{
+    width: 40px; height:40px;
+    border-radius: 10px;
+    background: var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size: 18px;
+    flex-shrink:0;
+  }
+  .badge-info{ flex:1; }
+  .badge-title-row{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .badge-title{ font-size: 14.5px; font-weight: 800; color:#7a5108; }
+  .badge-class{
+    background: #d98f2b;
+    color:#fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .badge-rating{ font-size: 12px; color:#9a7233; margin-top: 2px; }
+  .ps-stats{
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.7;
+  }
+
+  /* ---------- Music card ---------- */
+  .music-card{
+    padding: 0;
+    min-height: 320px;
+    justify-content: flex-end;
+    position: relative;
+  }
+  .music-art{
+    width: 100%;
+    aspect-ratio: 1/1;
+    position: relative;
+    background: radial-gradient(circle at 50% 50%, #1c2431 0%, #0c0f16 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .vinyl{
+    width: 76%;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, #2b3450, #4a3b5c 25%, #7a4d5f 45%, #d9a5a0 60%, #3a4560 80%, #2b3450);
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    animation: spin 14s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .vinyl::after{
+    content:'';
+    position:absolute;
+    top:50%; left:50%;
+    width: 18%; height:18%;
+    background: #f4f4f5;
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+  }
+  .music-caption{
+    padding: 14px 20px 18px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  .music-meta{ font-size: 11px; color: var(--text-faint); display:flex; align-items:center; gap:6px; }
+  .music-song{ font-size: 17px; font-weight: 800; margin-top: 4px; }
+  .music-artist{ font-size: 12.5px; color: var(--text-sub); margin-top: 2px; }
+  .plus-circle{
+    width: 34px; height:34px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--text-sub);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  /* ---------- Small info cards row ---------- */
+  .coding-time-card h2{ font-size: 15.5px; font-weight: 700; margin-bottom: 16px; }
+  .mini-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex:1;
+  }
+  .mini-cell{
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    display:flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 92px;
+  }
+  .mini-cell.active{
+    background: var(--purple);
+    color: #fff;
+  }
+  .mini-icon{ font-size: 16px; }
+  .mini-pct{ font-size: 19px; font-weight: 800; margin-top: 8px; }
+  .mini-label{ font-size: 11.5px; margin-top: 2px; opacity: 0.75; }
+
+  .time-card{
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .time-big{
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -1px;
+  }
+  .time-now{
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-top: 16px;
+  }
+  .time-loc{
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 2px;
+    display:flex;
+    align-items:center;
+    gap: 6px;
+  }
+
+  .photos-card{ padding: 24px; }
+  .photos-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .photos-eyebrow{
+    font-size: 11px;
+    color: var(--text-faint);
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .photos-head h2{ font-size: 19px; font-weight: 800; }
+  .photo-stack{
+    position: relative;
+    height: 190px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .photo-stack .p{
+    position:absolute;
+    width: 70%;
+    aspect-ratio: 4/5;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    background-size: cover;
+    background-position: center;
+  }
+  .photo-stack .p1{ transform: rotate(-9deg) translateX(-18px); z-index:1; background: linear-gradient(160deg,#1a2230,#0c1420); }
+  .photo-stack .p2{ transform: rotate(7deg) translateX(14px); z-index:2; background: linear-gradient(200deg,#4a5a8a,#0b0e14); }
+  .photo-stack .p3{ transform: rotate(-1deg); z-index:3; background: linear-gradient(180deg,#9cc6e8 0%, #cfe3ef 45%, #e9dcc4 55%, #c9ab7c 100%); }
+
+  /* ---------- Quote + MBTI + Navy row ---------- */
+  .quote-card{ justify-content: flex-end; min-height: 210px; }
+  .quote-icon{
+    width: 36px; height:36px;
+    border-radius: 10px;
+    background: #fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 17px;
+    color: var(--text-sub);
+    margin-bottom: 16px;
+  }
+  .quote-text{
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.45;
+    letter-spacing: -0.3px;
+  }
+
+  .mbti-card h2{ font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+  .mbti-desc{
+    font-size: 12.5px;
+    color: var(--text-sub);
+    line-height: 1.6;
+    margin-bottom: 18px;
+  }
+  .mbti-stage{
+    position: relative;
+    flex: 1;
+    min-height: 130px;
+  }
+  .mbti-pill{
+    position:absolute;
+    background: #fff;
+    border-radius: 12px;
+    font-weight: 700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--text-main);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .mbti-pill.type-label{
+    top: 0; left: 0;
+    padding: 8px 14px;
+    font-size: 13px;
+    background: var(--purple);
+    color:#fff;
+  }
+  .mbti-pill.letter{
+    width: 56px; height: 56px;
+    font-size: 22px;
+    border-radius: 16px;
+  }
+  .mbti-pill.i{ top: 30px; left: 0; background: var(--purple); color:#fff; }
+  .mbti-pill.n{ top: 60px; left: 74px; width:48px; height:48px; font-size:19px; }
+  .mbti-pill.t{ top: 92px; left: 130px; width:48px; height:48px; font-size:19px; }
+  .mbti-pill.j{ top: 124px; left: 186px; width:48px; height:48px; font-size:19px; }
+
+  .navy-card{
+    color: var(--text-main);
+    position: relative;
+    overflow: visible;
+    min-height: 210px;
+  }
+  .navy-title{
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.4;
+    margin-bottom: 10px;
+  }
+  .navy-title .leaf{ font-size: 17px; }
+  .navy-progress-wrap{
+    margin-top: auto;
+    position: relative;
+    height: 90px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+    margin-left: -24px;
+    margin-right: -24px;
+    margin-bottom: -24px;
+  }
+  .navy-sea{
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height: 78%;
+    background: linear-gradient(180deg, #4f8ff0 0%, #2f6fed 100%);
+  }
+  .navy-ship{
+    position:absolute;
+    bottom: 78%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+  }
+  .navy-pct{
+    position:absolute;
+    right: 16px;
+    bottom: 12px;
+    color:#fff;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  /* ---------- Bottom tab bar ---------- */
+  .tabbar{
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px;
+    display:flex;
+    gap: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 50;
+  }
+  .tabbar button{
+    border:none;
+    background: transparent;
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-sub);
+    cursor:pointer;
+  }
+  .tabbar button.active{
+    background: var(--card-bg);
+    color: var(--text-main);
+  }
+
+  /* span sizing */
+  .col-2{ grid-column: span 2; }
+  .row-2{ grid-row: span 2; }
+
+  @media (max-width: 900px){
+    .grid{ grid-template-columns: repeat(2,1fr); }
+    .col-2{ grid-column: span 2; }
+  }
+  @media (max-width: 620px){
+    .wrap{ padding: 40px 16px 110px; }
+    .header h1{ font-size: 26px; }
+    .grid{ grid-template-columns: 1fr; }
+    .col-2{ grid-column: span 1; }
+    .avatar-card, .music-card{ min-height: auto; }
+    .contrib-grid{ grid-template-columns: repeat(10,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="header">
+    <h1><span class="wave">👋</span><br>안녕하세요<br>저는 최선우입니다.</h1>
+    <p class="sub">모든 사람이 테크를 누릴 수 있도록 노력하는 초등학생 개발자입니다.</p>
+    이 페이지는 https://yuntae.in/ 에서 영감을 받아 제작되었습니다.
+    <nav>
+      <a href="https://github.com/danidevlab/" target="_blank">GitHub</a>
+      <a href="mailto:daniell0626@naver.com" target="_blank">Main Email</a>
+      <a href="mailto:danieell0626@gmail.com" target="_blank">Sub Email</a>
+    </nav>
+  </header>
+
+  <!-- Grid -->
+  <div class="grid">
+
+    <!-- Skills -->
+    <div class="card skills-card">
+      <h2>Skills</h2>
+
+      <div class="skill-group">
+        <span class="skill-label">LANGUAGES</span>
+        <div class="chip-row">
+          <span class="chip"><span class="dot" style="background:#f0db4f;color:#3b3b0a;">JS</span> JavaScript</span>
+          <span class="chip"><span class="dot" style="background:#3178c6;">HTML</span>HTML</span>
+          <span class="chip"><span class="dot" style="background:#7f52ff;">CSS</span>CSS</span>
+        </div>
+      </div>
+      <div class="scroll-hint">
+        <span>↓</span>
+        <span>스크롤해서 더보기</span>
+      </div>
+    </div>
+
+    <!-- Education -->
+    <div class="card edu-card">
+      <div class="tabs">
+        <button class="tab active" data-tab="education">학력</button>
+        <button class="tab" data-tab="certificate">자격증</button>
+      </div>
+      <div class="timeline-panel">
+        <div class="timeline" data-panel="education">
+          <div class="tl-item">
+            <span class="tl-icon">🏫</span>
+            <div class="tl-title">중문초등학교</div>
+            <div class="tl-sub">1학년~5학년</div>
+          </div>
+        </div>
+        <div class="timeline" data-panel="certificate" hidden>
+          <div class="tl-item">
+            <span class="tl-icon">📜</span>
+            <div class="tl-title">자격증 준비 중</div>
+            <div class="tl-sub">새로운 자격증을 하나씩 쌓아가고 있어요.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub stats -->
+    <div class="card gh-card">
+      <div class="gh-head">
+        <div>
+          <h2>GitHub Stats</h2>
+          <div class="gh-handle">@danidevlab</div>
+        </div>
+        <div class="add-btn">+</div>
+      </div>
+      <div class="gh-recent">최근 36일 동안</div>
+      <div class="gh-commits">41 <span>개의 commits</span></div>
+      <div class="contrib-grid" id="contribGrid"></div>
+    </div>
+
+    <!-- JS practice -->
+    <div class="card ps-card">
+      <h2>JavaScript를 연습하고 있어요.</h2>
+      <p>JS는 사이트에 근육을 붙여주죠.</p>
+      <div class="badge-box">
+        <div class="badge-icon">🥇</div>
+        <div class="badge-info">
+          <div class="badge-title-row">
+            <span class="badge-title">함수, 변수를 배웠어요.</span>
+            <span class="badge-class">Class 3</span>
+          </div>
+          <div class="badge-rating">Rating: 1160</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coding time -->
+    <div class="card coding-time-card">
+      <h2>주로 저녁에 코딩.</h2>
+      <div class="mini-grid">
+        <div class="mini-cell">
+          <span class="mini-icon">☀️</span>
+          <div><div class="mini-pct">5.8%</div><div class="mini-label">아침</div></div>
+        </div>
+        <div class="mini-cell">
+          <span class="mini-icon">⛅</span>
+          <div><div class="mini-pct">25.9%</div><div class="mini-label">오후</div></div>
+        </div>
+        <div class="mini-cell active">
+          <span class="mini-icon">🌥️</span>
+          <div><div class="mini-pct">34.5%</div><div class="mini-label">저녁</div></div>
+        </div>
+        <div class="mini-cell">
+          <span class="mini-icon">🌙</span>
+          <div><div class="mini-pct">33.8%</div><div class="mini-label">밤과 새벽</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time -->
+    <div class="card time-card">
+      <div class="time-big" id="clockTime">09<br>31</div>
+      <div class="time-now">now</div>
+      <div class="time-loc">in <b>Seoul</b> 🇰🇷</div>
+    </div>
+    <!-- Quote -->
+    <div class="card quote-card">
+      <div class="quote-icon">💬</div>
+      <div class="quote-text">오롯이 나만의 속도를 따라가야, 어떤 기류에도 흔들리지 않을 테니까.</div>
+    </div>
+
+    <!-- MBTI -->
+    <div class="card mbti-card">
+      <h2>4글자로 보는 성격</h2>
+      <p class="mbti-desc">제가 가진 모든 모습을 4글자에 담을 수는 없지만, MBTI는 대략적인 성격을 나타내줘요.</p>
+      <div class="mbti-stage">
+        <div class="mbti-pill type-label">내향형</div>
+        <div class="mbti-pill letter i">I</div>
+        <div class="mbti-pill letter n">N</div>
+        <div class="mbti-pill letter t">T</div>
+        <div class="mbti-pill letter j">J</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bottom tab bar -->
+<div class="tabbar">
+  <button class="active" data-tab="about">About</button>
+  <button data-tab="projects">Projects</button>
+</div>
+<script>
+  // 실시간 시계 (서울 시간 기준)
+  function updateClock(){
+    const now = new Date();
+    const seoul = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+    const hh = String(seoul.getHours()).padStart(2,'0');
+    const mm = String(seoul.getMinutes()).padStart(2,'0');
+    document.getElementById('clockTime').innerHTML = hh + '<br>' + mm;
+  }
+  updateClock();
+  setInterval(updateClock, 1000 * 30);
+
+  // GitHub 잔디 그리드 랜덤 생성 (예시용)
+  const grid = document.getElementById('contribGrid');
+  const levels = ['', 'l1', 'l2', 'l3', 'l4'];
+  
+  // GitHub API에서 실제 정보 가져오기
+  fetch('https://api.github.com/users/danidevlab')
+    .then(res => res.json())
+    .then(data => {
+      if(data.public_repos) {
+        // API 호출 성공 시 처리 가능
+        console.log('GitHub user:', data);
+      }
+    })
+    .catch(err => console.log('GitHub API error:', err));
+  
+  for(let i = 0; i < 42; i++){
+    const cell = document.createElement('div');
+    const r = Math.random();
+    let level = '';
+    if(r > 0.55) level = levels[Math.floor(Math.random()*4)+1];
+    cell.className = 'contrib-cell ' + level;
+    grid.appendChild(cell);
+  }
+
+  let tmiIdx = 0;
+  const refreshBtn = document.getElementById('refreshTmi');
+  const tmiText = document.getElementById('tmiText');
+  if (refreshBtn && tmiText) {
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.classList.add('spin');
+      tmiIdx = (tmiIdx + 1) % tmiList.length;
+      setTimeout(() => {
+        tmiText.innerHTML = tmiList[tmiIdx];
+      }, 200);
+      setTimeout(() => refreshBtn.classList.remove('spin'), 400);
+    });
+  }
+
+  // 학력/자격증 탭
+  document.querySelectorAll('.edu-card .tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const tabName = btn.getAttribute('data-tab');
+      document.querySelectorAll('.edu-card .tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.edu-card .timeline').forEach(panel=>{
+        if(panel.getAttribute('data-panel') === tabName){
+          panel.removeAttribute('hidden');
+        } else {
+          panel.setAttribute('hidden', '');
+        }
+      });
+    });
+  });
+
+  // 하단 About/Projects 탭
+  document.querySelectorAll('.tabbar button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
