@@ -466,6 +466,7 @@
     font-weight: 700;
     color: var(--text-sub);
     cursor:pointer;
+    transition: all 0.3s ease;
   }
   .tabbar button.active{
     background: var(--card-bg);
@@ -881,8 +882,16 @@ loadGitHubStats();
   // 하단 About/Projects 탭
   document.querySelectorAll('.tabbar button').forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      const tabName = btn.getAttribute('data-tab');
       document.querySelectorAll('.tabbar button').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
+      
+      // 페이지 이동
+      if(tabName === 'about'){
+        window.location.href = './index.html';
+      } else if(tabName === 'projects'){
+        window.location.href = 'projects.html';
+      }
     });
   });
 </script>
