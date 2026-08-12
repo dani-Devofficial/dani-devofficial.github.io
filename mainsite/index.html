@@ -257,21 +257,32 @@
     color: var(--text-sub);
     margin-left: 2px;
   }
-  .contrib-grid{
-    display:grid;
-    grid-template-columns: repeat(14, 1fr);
-    gap: 4px;
-  }
-  .contrib-cell{
-    width: 100%;
-    aspect-ratio: 1/1;
-    border-radius: 3px;
-    background: #e4e4e7;
-  }
-  .contrib-cell.l1{ background:#c7f0cf; }
-  .contrib-cell.l2{ background:#7fdb96; }
-  .contrib-cell.l3{ background:#34b855; }
-  .contrib-cell.l4{ background:#1c7d37; }
+.contrib-grid{
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  width: 100%;
+  height: 110px;
+  overflow: hidden;
+}
+
+.contrib-cell{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 2px;
+  background: #e4e4e7;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+  cursor: pointer;
+}
+
+.contrib-cell:hover{
+  transform: scale(1.2);
+  filter: brightness(0.9);
+}
 
   /* ---------- PS practice card ---------- */
   .ps-card h2{ font-size: 18px; font-weight: 800; margin-bottom: 12px; }
@@ -474,7 +485,6 @@
     .header h1{ font-size: 26px; }
     .grid{ grid-template-columns: 1fr; }
     .col-2{ grid-column: span 1; }
-    .contrib-grid{ grid-template-columns: repeat(10,1fr); }
   }
 </style>
 </head>
@@ -555,20 +565,36 @@
     </div>
 
     <!-- GitHub stats -->
-    <div class="card gh-card">
-      <div class="gh-head">
-        <div>
-          <h2>GitHub Stats</h2>
-          <div class="gh-handle">@danidevlab</div>
-        </div>
-        <a href="https://github.com/danidevlab" target="_blank">
-          <div class="add-btn">+</div>
-        </a>
-      </div>
-      <div class="gh-recent">최근 36일 동안</div>
-      <div class="gh-commits">41 <span>개의 commits</span></div>
-      <div class="contrib-grid" id="contribGrid"></div>
+<!-- GitHub stats -->
+<div class="card gh-card">
+  <div class="gh-head">
+    <div>
+      <h2>GitHub Stats</h2>
+      <div class="gh-handle">@danidevlab</div>
     </div>
+
+    <a
+      href="https://github.com/danidevlab"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="GitHub profile"
+    >
+      <div class="add-btn">+</div>
+    </a>
+  </div>
+
+  <div class="gh-recent" id="ghRecent">
+    최근 36일 동안
+  </div>
+
+  <div class="gh-commits">
+    <span id="ghCommits">-</span>
+    <span>개의 contributions</span>
+  </div>
+
+  <div class="contrib-grid" id="contribGrid"></div>
+</div>
+
 
     <!-- JS practice -->
     <div class="card ps-card">
@@ -649,30 +675,192 @@
   }
   updateClock();
   setInterval(updateClock, 1000 * 30);
+  
+  /*
+ * GitHub API에서 실제 정보 가져오기
+ */
+async function loadGitHubStats() {
+  const username = "danidevlab";
 
-  // GitHub 잔디 그리드 랜덤 생성 (예시용)
-  const grid = document.getElementById('contribGrid');
-  const levels = ['', 'l1', 'l2', 'l3', 'l4'];
-  
-  // GitHub API에서 실제 정보 가져오기
-  fetch('https://api.github.com/users/danidevlab')
-    .then(res => res.json())
-    .then(data => {
-      if(data.public_repos) {
-        // API 호출 성공 시 처리 가능
-        console.log('GitHub user:', data);
-      }
-    })
-    .catch(err => console.log('GitHub API error:', err));
-  
-  for(let i = 0; i < 42; i++){
-    const cell = document.createElement('div');
-    const r = Math.random();
-    let level = '';
-    if(r > 0.55) level = levels[Math.floor(Math.random()*4)+1];
-    cell.className = 'contrib-cell ' + level;
-    grid.appendChild(cell);
+  const grid = document.getElementById("contribGrid");
+  const commits = document.getElementById("ghCommits");
+  const recent = document.getElementById("ghRecent");
+
+  try {
+    const url =
+      `https://brettterpstra.com/contrib/generate` +
+      `?username=${encodeURIComponent(username)}` +
+      `&weeks=52` +
+      `&json=1`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data.values) || data.values.length === 0) {
+      throw new Error("GitHub contribution data가 없습니다.");
+    }
+
+    const values = data.values.map(Number);
+
+    /*
+     * -------------------------
+     * 전체 contribution
+     * -------------------------
+     */
+
+    const total = values.reduce(
+      (sum, value) => sum + value,
+      0
+    );
+
+    commits.textContent = total.toLocaleString();
+
+
+    /*
+     * -------------------------
+     * 최근 36일
+     * -------------------------
+     */
+
+    const displayValues = values.slice(-280);
+    const recentDays = displayValues.slice(-36);
+
+    const recentTotal = recentDays.reduce(
+      (sum, value) => sum + value,
+      0
+    );
+
+    recent.textContent =
+      `최근 36일 동안 · ${recentTotal.toLocaleString()} contributions`;
+
+
+    /*
+     * -------------------------
+     * 잔디 초기화
+     * -------------------------
+     */
+
+    grid.innerHTML = "";
+
+
+    /*
+     * -------------------------
+     * 최대 contribution
+     * -------------------------
+     */
+
+    const max = Math.max(...displayValues);
+
+
+    /*
+     * -------------------------
+     * 실제 잔디 생성
+     * -------------------------
+     */
+
+    displayValues.forEach((count, index) => {
+      const cell = document.createElement("div");
+
+      cell.className = "contrib-cell";
+
+      cell.style.backgroundColor =
+        getContributionColor(count, max);
+
+      /*
+       * 날짜
+       */
+      const date = getDateFromIndex(
+        data.startDate,
+        values.length - displayValues.length + index
+      );
+
+      cell.title =
+        `${date} · ${count} contributions`;
+
+      grid.appendChild(cell);
+    });
+
+  } catch (error) {
+    console.error("GitHub Stats Error:", error);
+
+    commits.textContent = "-";
+
+    recent.textContent =
+      "GitHub 데이터를 불러오지 못했어요.";
+
+    grid.innerHTML = "";
+
+    const errorMessage =
+      document.createElement("div");
+
+    errorMessage.style.gridColumn = "1 / -1";
+    errorMessage.style.color = "#a1a1aa";
+    errorMessage.style.fontSize = "12px";
+    errorMessage.textContent =
+      "GitHub Stats를 불러오지 못했습니다.";
+
+    grid.appendChild(errorMessage);
   }
+}
+
+
+/*
+ * contribution 개수에 따른 색상
+ */
+function getContributionColor(count, max) {
+
+  if (count === 0) {
+    return "#e4e4e7";
+  }
+
+  if (max <= 0) {
+    return "#e4e4e7";
+  }
+
+  const ratio = count / max;
+
+  if (ratio <= 0.25) {
+    return "#c7f0cf";
+  }
+
+  if (ratio <= 0.50) {
+    return "#7fdb96";
+  }
+
+  if (ratio <= 0.75) {
+    return "#34b855";
+  }
+
+  return "#1c7d37";
+}
+
+
+/*
+ * Unix timestamp → YYYY-MM-DD
+ */
+function getDateFromIndex(startTimestamp, index) {
+
+  const start =
+    new Date(Number(startTimestamp));
+
+  start.setUTCDate(
+    start.getUTCDate() + index
+  );
+
+  return start
+    .toISOString()
+    .slice(0, 10);
+}
+
+
+// 실행
+loadGitHubStats();
+
 
   // 학력/자격증 탭
   document.querySelectorAll('.edu-card .tab').forEach(btn=>{
