@@ -74,9 +74,7 @@
   }
   .header nav a{
     color: var(--text-main);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-color: var(--text-faint);
+    text-decoration: none;
   }
   .header nav a:hover{ color: var(--purple); }
 
@@ -219,80 +217,7 @@
   .tl-sub{ font-size: 12.5px; color: var(--text-sub); margin-top: 4px; }
 
   /* ---------- TMI card ---------- */
-  .tmi-card{
-    color: var(--text-main);
-  }
-  .tmi-card .card-title{ color: var(--text-sub); margin-bottom: 14px; }
-  .tmi-text{
-    font-size: 21px;
-    font-weight: 700;
-    line-height: 1.55;
-    letter-spacing: -0.3px;
-  }
-  .tmi-text b{ font-weight: 800; }
-  .tmi-text .emoji-box{
-    display:inline-flex;
-    width: 24px; height:24px;
-    background: var(--text-main);
-    color:#fff;
-    border-radius: 6px;
-    align-items:center; justify-content:center;
-    font-size: 13px;
-    vertical-align: -5px;
-    margin: 0 1px;
-  }
-  .tmi-text .emoji-circle{
-    display:inline-flex;
-    width: 24px; height:24px;
-    background: #3b82f6;
-    color:#fff;
-    border-radius: 50%;
-    align-items:center; justify-content:center;
-    font-size: 13px;
-    vertical-align: -5px;
-    margin: 0 1px;
-  }
-  .refresh-btn{
-    margin-top: auto;
-    align-self: flex-end;
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: #fff;
-    border: 1px solid var(--border);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor: pointer;
-    font-size: 16px;
-    color: var(--text-sub);
-    transition: transform .4s ease;
-  }
-  .refresh-btn:hover{ background: #f7f7f8; }
-  .refresh-btn.spin{ transform: rotate(180deg); }
 
-  /* ---------- Painting / Avatar card ---------- */
-  .avatar-card{
-    padding: 0;
-    min-height: 320px;
-    justify-content: flex-end;
-  }
-  .avatar-img{
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1/1;
-    border-radius: var(--radius) var(--radius) 0 0;
-    overflow: hidden;
-    background: radial-gradient(circle at 50% 40%, #2d3a52 0%, #16202f 60%, #0e1622 100%);
-  }
-  .avatar-img svg{ width:100%; height:100%; display:block; }
-  .avatar-caption{
-    padding: 14px 20px;
-    font-size: 12px;
-    color: var(--text-faint);
-    display:flex;
-    align-items:center;
-    gap: 6px;
-  }
 
   /* ---------- GitHub stats card ---------- */
   .gh-card .gh-head{
@@ -314,6 +239,7 @@
     font-size: 15px;
     color: var(--text-sub);
     flex-shrink: 0;
+    text-decoration: none;
   }
   .gh-recent{
     margin-top: 34px;
@@ -397,62 +323,7 @@
     line-height: 1.7;
   }
 
-  /* ---------- Music card ---------- */
-  .music-card{
-    padding: 0;
-    min-height: 320px;
-    justify-content: flex-end;
-    position: relative;
-  }
-  .music-art{
-    width: 100%;
-    aspect-ratio: 1/1;
-    position: relative;
-    background: radial-gradient(circle at 50% 50%, #1c2431 0%, #0c0f16 100%);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .vinyl{
-    width: 76%;
-    aspect-ratio: 1/1;
-    border-radius: 50%;
-    background: conic-gradient(from 200deg, #2b3450, #4a3b5c 25%, #7a4d5f 45%, #d9a5a0 60%, #3a4560 80%, #2b3450);
-    position: relative;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    animation: spin 14s linear infinite;
-  }
-  @keyframes spin{ to{ transform: rotate(360deg); } }
-  .vinyl::after{
-    content:'';
-    position:absolute;
-    top:50%; left:50%;
-    width: 18%; height:18%;
-    background: #f4f4f5;
-    border-radius: 50%;
-    transform: translate(-50%,-50%);
-  }
-  .music-caption{
-    padding: 14px 20px 18px;
-    display:flex;
-    align-items:center;
-    justify-content: space-between;
-  }
-  .music-meta{ font-size: 11px; color: var(--text-faint); display:flex; align-items:center; gap:6px; }
-  .music-song{ font-size: 17px; font-weight: 800; margin-top: 4px; }
-  .music-artist{ font-size: 12.5px; color: var(--text-sub); margin-top: 2px; }
-  .plus-circle{
-    width: 34px; height:34px;
-    border-radius: 50%;
-    background: #fff;
-    border: 1px solid var(--border);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color: var(--text-sub);
-    cursor:pointer;
-    flex-shrink:0;
-  }
+
 
   /* ---------- Small info cards row ---------- */
   .coding-time-card h2{ font-size: 15.5px; font-weight: 700; margin-bottom: 16px; }
@@ -504,41 +375,7 @@
     gap: 6px;
   }
 
-  .photos-card{ padding: 24px; }
-  .photos-head{
-    display:flex;
-    align-items:flex-start;
-    justify-content: space-between;
-    margin-bottom: 18px;
-  }
-  .photos-eyebrow{
-    font-size: 11px;
-    color: var(--text-faint);
-    display:flex;
-    align-items:center;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-  .photos-head h2{ font-size: 19px; font-weight: 800; }
-  .photo-stack{
-    position: relative;
-    height: 190px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .photo-stack .p{
-    position:absolute;
-    width: 70%;
-    aspect-ratio: 4/5;
-    border-radius: 10px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    background-size: cover;
-    background-position: center;
-  }
-  .photo-stack .p1{ transform: rotate(-9deg) translateX(-18px); z-index:1; background: linear-gradient(160deg,#1a2230,#0c1420); }
-  .photo-stack .p2{ transform: rotate(7deg) translateX(14px); z-index:2; background: linear-gradient(200deg,#4a5a8a,#0b0e14); }
-  .photo-stack .p3{ transform: rotate(-1deg); z-index:3; background: linear-gradient(180deg,#9cc6e8 0%, #cfe3ef 45%, #e9dcc4 55%, #c9ab7c 100%); }
+
 
   /* ---------- Quote + MBTI + Navy row ---------- */
   .quote-card{ justify-content: flex-end; min-height: 210px; }
@@ -593,50 +430,7 @@
   .mbti-pill.t{ top: 30px; left: 120px; width:48px; height:48px; font-size:19px; }
   .mbti-pill.j{ top: 30px; left: 180px; width:48px; height:48px; font-size:19px; }
 
-  .navy-card{
-    color: var(--text-main);
-    position: relative;
-    overflow: visible;
-    min-height: 210px;
-  }
-  .navy-title{
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 1.4;
-    margin-bottom: 10px;
-  }
-  .navy-title .leaf{ font-size: 17px; }
-  .navy-progress-wrap{
-    margin-top: auto;
-    position: relative;
-    height: 90px;
-    border-radius: 0 0 var(--radius) var(--radius);
-    overflow: hidden;
-    margin-left: -24px;
-    margin-right: -24px;
-    margin-bottom: -24px;
-  }
-  .navy-sea{
-    position:absolute;
-    bottom:0; left:0; right:0;
-    height: 78%;
-    background: linear-gradient(180deg, #4f8ff0 0%, #2f6fed 100%);
-  }
-  .navy-ship{
-    position:absolute;
-    bottom: 78%;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 20px;
-  }
-  .navy-pct{
-    position:absolute;
-    right: 16px;
-    bottom: 12px;
-    color:#fff;
-    font-size: 15px;
-    font-weight: 800;
-  }
+
 
   /* ---------- Bottom tab bar ---------- */
   .tabbar{
@@ -680,7 +474,6 @@
     .header h1{ font-size: 26px; }
     .grid{ grid-template-columns: 1fr; }
     .col-2{ grid-column: span 1; }
-    .avatar-card, .music-card{ min-height: auto; }
     .contrib-grid{ grid-template-columns: repeat(10,1fr); }
   }
 </style>
@@ -768,7 +561,9 @@
           <h2>GitHub Stats</h2>
           <div class="gh-handle">@danidevlab</div>
         </div>
-        <div class="add-btn">+</div>
+        <a href="https://github.com/danidevlab" target="_blank">
+          <div class="add-btn">+</div>
+        </a>
       </div>
       <div class="gh-recent">최근 36일 동안</div>
       <div class="gh-commits">41 <span>개의 commits</span></div>
@@ -877,20 +672,6 @@
     if(r > 0.55) level = levels[Math.floor(Math.random()*4)+1];
     cell.className = 'contrib-cell ' + level;
     grid.appendChild(cell);
-  }
-
-  let tmiIdx = 0;
-  const refreshBtn = document.getElementById('refreshTmi');
-  const tmiText = document.getElementById('tmiText');
-  if (refreshBtn && tmiText) {
-    refreshBtn.addEventListener('click', () => {
-      refreshBtn.classList.add('spin');
-      tmiIdx = (tmiIdx + 1) % tmiList.length;
-      setTimeout(() => {
-        tmiText.innerHTML = tmiList[tmiIdx];
-      }, 200);
-      setTimeout(() => refreshBtn.classList.remove('spin'), 400);
-    });
   }
 
   // 학력/자격증 탭
