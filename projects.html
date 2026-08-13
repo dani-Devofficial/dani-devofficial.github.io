@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DaniDevLab · Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap');
 
   :root{
     --bg: #f4f4f5;
@@ -109,6 +111,12 @@
     display: flex;
     flex-direction: column;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+    width: 100%;
+    padding: 0;
   }
   .project-card:hover{
     transform: translateY(-3px);
@@ -217,13 +225,230 @@
     color: var(--text-main);
   }
 
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(24,24,27,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 100;
+  }
+  .modal-overlay.open{
+    display: flex;
+  }
+  .modal-card{
+    background: #fff;
+    border-radius: 28px;
+    width: 100%;
+    max-width: 940px;
+    max-height: 88vh;
+    overflow-y: auto;
+    position: relative;
+    padding: 40px 44px 44px;
+  }
+  .modal-close{
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 18px;
+    color: var(--text-main);
+    cursor: pointer;
+  }
+  .modal-close:hover{ background: var(--border); }
+
+  .modal-head{
+    display:flex;
+    gap: 24px;
+    padding-right: 50px;
+  }
+  .modal-icon{
+    width: 100px;
+    height: 100px;
+    border-radius: 22px;
+    flex-shrink: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow: hidden;
+  }
+  .modal-icon img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .modal-icon .placeholder-icon{
+    font-size: 42px;
+  }
+
+  .modal-head-info{
+    flex: 1;
+    min-width: 0;
+  }
+  .modal-tags{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .modal-tag{
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-sub);
+    background: var(--card-bg);
+    border-radius: 999px;
+    padding: 6px 14px;
+  }
+  .modal-title{
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+  .modal-desc{
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .modal-links{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .modal-link-btn{
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+  .modal-link-btn:hover{ background: var(--border); }
+
+  /* ---------- Modal info grid ---------- */
+  .modal-info-grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 32px;
+  }
+  .modal-info-cell{
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 18px 16px;
+    text-align: center;
+  }
+  .modal-info-label{
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+  }
+  .modal-info-value{
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  /* ---------- Modal screenshots ---------- */
+  .modal-shots-section{
+    margin-top: 36px;
+  }
+  .modal-shots-eyebrow{
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .modal-shots-head{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .modal-shots-title{
+    font-size: 19px;
+    font-weight: 800;
+  }
+  .modal-shots-nav{
+    display:flex;
+    gap: 8px;
+  }
+  .shots-nav-btn{
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 15px;
+    cursor: pointer;
+    color: var(--text-main);
+  }
+  .shots-nav-btn:hover{ background: var(--border); }
+
+  .modal-shots-track{
+    display:flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .modal-shots-track::-webkit-scrollbar{ display: none; }
+
+  .modal-shot{
+    flex: 0 0 auto;
+    width: 220px;
+    aspect-ratio: 9 / 16;
+    border-radius: 18px;
+    overflow: hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position: relative;
+  }
+  .modal-shot img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .modal-shot .placeholder-icon{
+    font-size: 26px;
+    opacity: 0.8;
+  }
+
   @media (max-width: 900px){
     .project-grid{ grid-template-columns: repeat(2,1fr); }
+    .modal-info-grid{ grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 620px){
     .wrap{ padding: 40px 16px 110px; }
     .header h1{ font-size: 26px; }
     .project-grid{ grid-template-columns: 1fr; }
+    .modal-card{ padding: 28px 20px 32px; }
+    .modal-head{ flex-direction: column; padding-right: 0; }
+    .modal-icon{ width: 72px; height: 72px; }
+    .modal-title{ font-size: 24px; }
+    .modal-info-grid{ grid-template-columns: 1fr 1fr; }
+    .modal-shot{ width: 150px; }
   }
 </style>
 </head>
@@ -252,9 +477,9 @@
   <!-- Project grid -->
   <div class="project-grid" id="projectGrid">
 
-    <a class="project-card" data-category="web" href="projectinfo.html?id=project-1">
+    <button class="project-card" type="button" data-category="web" data-id="project-1">
       <div class="project-thumb" style="background:#f4f4f5;">
-        <span class="placeholder-icon">🖼️</span>
+        <span class="placeholder-icon">�</span>
       </div>
       <div class="project-body">
         <div class="project-title-row">
@@ -267,11 +492,11 @@
           <span class="project-tag">Web Application</span>
         </div>
       </div>
-    </a>
+    </button>
 
-    <a class="project-card" data-category="web" href="projectinfo.html?id=project-2">
+    <button class="project-card" type="button" data-category="web" data-id="project-2">
       <div class="project-thumb" style="background:#ea9a3e;">
-        <span class="placeholder-icon">📱</span>
+        <span class="placeholder-icon">�</span>
       </div>
       <div class="project-body">
         <div class="project-title-row">
@@ -284,11 +509,11 @@
           <span class="project-tag">Web Application</span>
         </div>
       </div>
-    </a>
+    </button>
 
-    <a class="project-card" data-category="windows" href="projectinfo.html?id=project-3">
+    <button class="project-card" type="button" data-category="windows" data-id="project-3">
       <div class="project-thumb" style="background:#7a2b34;">
-        <span class="placeholder-icon">🎓</span>
+        <span class="placeholder-icon">🔍</span>
       </div>
       <div class="project-body">
         <div class="project-title-row">
@@ -301,11 +526,11 @@
           <span class="project-tag">Windows Program</span>
         </div>
       </div>
-    </a>
+    </button>
 
-    <a class="project-card" data-category="windows" href="projectinfo.html?id=project-4">
+    <button class="project-card" type="button" data-category="windows" data-id="project-4">
       <div class="project-thumb" style="background:#3ee6a8;">
-        <span class="placeholder-icon">📻</span>
+        <span class="placeholder-icon">�</span>
       </div>
       <div class="project-body">
         <div class="project-title-row">
@@ -318,11 +543,11 @@
           <span class="project-tag">Windows Program</span>
         </div>
       </div>
-    </a>
+    </button>
 
-    <a class="project-card" data-category="web" href="projectinfo.html?id=project-5">
+    <button class="project-card" type="button" data-category="web" data-id="project-5">
       <div class="project-thumb" style="background:#4c9a8d;">
-        <span class="placeholder-icon">🗺️</span>
+        <span class="placeholder-icon">⏰</span>
       </div>
       <div class="project-body">
         <div class="project-title-row">
@@ -335,11 +560,11 @@
           <span class="project-tag">Web Application</span>
         </div>
       </div>
-    </a>
+    </button>
 
-    <a class="project-card" data-category="windows" href="projectinfo.html?id=project-6">
+    <button class="project-card" type="button" data-category="windows" data-id="project-6">
       <div class="project-thumb" style="background:#2a2a4a;">
-        <span class="placeholder-icon">🧩</span>
+        <span class="placeholder-icon">🛠️</span>
       </div>
       <div class="project-body">
         <div class="project-title-row">
@@ -352,7 +577,7 @@
           <span class="project-tag">Windows Program</span>
         </div>
       </div>
-    </a>
+    </button>
 
   </div>
 
@@ -364,8 +589,154 @@
   <button class="active" data-tab="projects">Projects</button>
 </div>
 
+<!-- Project detail modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card">
+    <button class="modal-close" id="modalClose" aria-label="닫기">✕</button>
+
+    <div class="modal-head">
+      <div class="modal-icon" id="modalIcon">
+        <span class="placeholder-icon" id="modalIconEmoji">🖼️</span>
+      </div>
+      <div class="modal-head-info">
+        <div class="modal-tags" id="modalTags"></div>
+        <div class="modal-title" id="modalTitle"></div>
+        <p class="modal-desc" id="modalDesc"></p>
+        <div class="modal-links" id="modalLinks"></div>
+      </div>
+    </div>
+
+    <div class="modal-info-grid" id="modalInfoGrid"></div>
+
+    <div class="modal-shots-section">
+      <div class="modal-shots-eyebrow">SCREENSHOTS</div>
+      <div class="modal-shots-head">
+        <div class="modal-shots-title">프로젝트 둘러보기</div>
+        <div class="modal-shots-nav">
+          <button class="shots-nav-btn" id="shotsPrev" aria-label="이전">‹</button>
+          <button class="shots-nav-btn" id="shotsNext" aria-label="다음">›</button>
+        </div>
+      </div>
+      <div class="modal-shots-track" id="modalShotsTrack"></div>
+    </div>
+  </div>
+</div>
+
 <script>
-  // 필터 버튼
+  // ---------- 프로젝트 상세 데이터 ----------
+  // projects.html 카드의 data-id와 매칭됩니다.
+  const projectData = {
+    "project-1": {
+      title: "File Viewer",
+      iconEmoji: "�",
+      iconBg: "#f4f4f5",
+      tags: ["Web", "HTML + CSS + JS"],
+      description: "온라인에서 엑셀과 워드 파일을 볼 수 있게 해주는 사이트입니다.",
+      links: [
+        { label: "웹 버전", url: "#" },
+        { label: "Github", url: "https://github.com/danidevlab/" }
+      ],
+      info: [
+        { label: "기간", value: "-" },
+        { label: "상태", value: "진행 중" },
+        { label: "사용자", value: "-" },
+        { label: "기여도", value: "개인" }
+      ],
+      shots: []
+    },
+    "project-2": {
+      title: "용돈 기입장",
+      iconEmoji: "�",
+      iconBg: "#ea9a3e",
+      tags: ["Web", "HTML + CSS + JS"],
+      description: "용돈을 기록하고 관리할 수 있는 웹 애플리케이션입니다.",
+      links: [
+        { label: "웹 버전", url: "#" },
+        { label: "Github", url: "https://github.com/danidevlab/" }
+      ],
+      info: [
+        { label: "기간", value: "-" },
+        { label: "상태", value: "진행 중" },
+        { label: "사용자", value: "-" },
+        { label: "기여도", value: "개인" }
+      ],
+      shots: []
+    },
+    "project-3": {
+      title: "SearchUP",
+      iconEmoji: "🔍",
+      iconBg: "#7a2b34",
+      tags: ["Windows", "Python"],
+      description: "Windows에 항상 떠다니는 웹 검색 바",
+      links: [
+        { label: "다운로드", url: "#" },
+        { label: "Github", url: "https://github.com/danidevlab/" }
+      ],
+      info: [
+        { label: "기간", value: "-" },
+        { label: "상태", value: "진행 중" },
+        { label: "사용자", value: "-" },
+        { label: "기여도", value: "개인" }
+      ],
+      shots: []
+    },
+    "project-4": {
+      title: "ServerTypeChecker",
+      iconEmoji: "�️",
+      iconBg: "#3ee6a8",
+      tags: ["Windows", "Python"],
+      description: "서버 타입을 확인해주는 프로그램입니다.",
+      links: [
+        { label: "다운로드", url: "#" },
+        { label: "Github", url: "https://github.com/danidevlab/" }
+      ],
+      info: [
+        { label: "기간", value: "-" },
+        { label: "상태", value: "진행 중" },
+        { label: "사용자", value: "-" },
+        { label: "기여도", value: "개인" }
+      ],
+      shots: []
+    },
+    "project-5": {
+      title: "Time",
+      iconEmoji: "⏰",
+      iconBg: "#4c9a8d",
+      tags: ["Web", "HTML + CSS + JS"],
+      description: "은은한 노을 위에 떠다니는 시계와 타이머.",
+      links: [
+        { label: "웹 버전", url: "#" },
+        { label: "Github", url: "https://github.com/danidevlab/" }
+      ],
+      info: [
+        { label: "기간", value: "-" },
+        { label: "상태", value: "진행 중" },
+        { label: "사용자", value: "-" },
+        { label: "기여도", value: "개인" }
+      ],
+      shots: []
+    },
+    "project-6": {
+      title: "DaniTools",
+      iconEmoji: "🛠️",
+      iconBg: "#2a2a4a",
+      tags: ["Windows", "HTML + CSS + JS"],
+      description: "창(window) 형태로 이루어진 도구 모음 프로그램입니다.",
+      links: [
+        { label: "다운로드", url: "#" },
+        { label: "Github", url: "https://github.com/danidevlab/" }
+      ],
+      info: [
+        { label: "기간", value: "-" },
+        { label: "상태", value: "진행 중" },
+        { label: "사용자", value: "-" },
+        { label: "기여도", value: "개인" }
+      ],
+      shots: []
+    }
+  };
+
+  // ---------- 필터 버튼 ----------
   const filterBtns = document.querySelectorAll('.filter-btn');
   const cards = document.querySelectorAll('.project-card');
   const grid = document.getElementById('projectGrid');
@@ -399,7 +770,85 @@
     });
   });
 
-  // 하단 About/Projects 탭
+  // ---------- 모달 ----------
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalClose = document.getElementById('modalClose');
+  const modalIcon = document.getElementById('modalIcon');
+  const modalIconEmoji = document.getElementById('modalIconEmoji');
+  const modalTags = document.getElementById('modalTags');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalDesc = document.getElementById('modalDesc');
+  const modalLinks = document.getElementById('modalLinks');
+  const modalInfoGrid = document.getElementById('modalInfoGrid');
+  const modalShotsTrack = document.getElementById('modalShotsTrack');
+  const shotsPrev = document.getElementById('shotsPrev');
+  const shotsNext = document.getElementById('shotsNext');
+
+  function openModal(id){
+    const data = projectData[id];
+    if (!data) return;
+
+    modalIcon.style.background = data.iconBg || '#ececee';
+    modalIconEmoji.textContent = data.iconEmoji || '🖼️';
+
+    modalTags.innerHTML = (data.tags || [])
+      .map(tag => `<span class="modal-tag">${tag}</span>`).join('');
+
+    modalTitle.textContent = data.title || '';
+    modalDesc.textContent = data.description || '';
+
+    modalLinks.innerHTML = (data.links || [])
+      .map(link => `<a class="modal-link-btn" href="${link.url}" target="_blank" rel="noopener noreferrer">${link.label} ↗</a>`)
+      .join('');
+
+    modalInfoGrid.innerHTML = (data.info || [])
+      .map(item => `
+        <div class="modal-info-cell">
+          <div class="modal-info-label">${item.label}</div>
+          <div class="modal-info-value">${item.value}</div>
+        </div>
+      `).join('');
+
+    const shots = (data.shots && data.shots.length) ? data.shots : [null, null, null];
+    modalShotsTrack.innerHTML = shots.map(src => {
+      if (src) {
+        return `<div class="modal-shot" style="background:#18181b;"><img src="${src}" alt="${data.title} 스크린샷"></div>`;
+      }
+      return `<div class="modal-shot" style="background:${data.iconBg || '#ececee'};"><span class="placeholder-icon">📷</span></div>`;
+    }).join('');
+
+    modalOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(){
+    modalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-id');
+      openModal(id);
+    });
+  });
+
+  modalClose.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('open')) closeModal();
+  });
+
+  shotsPrev.addEventListener('click', () => {
+    modalShotsTrack.scrollBy({ left: -240, behavior: 'smooth' });
+  });
+  shotsNext.addEventListener('click', () => {
+    modalShotsTrack.scrollBy({ left: 240, behavior: 'smooth' });
+  });
+
+  // ---------- 하단 About/Projects 탭 ----------
   document.querySelectorAll('.tabbar button').forEach(btn => {
     btn.addEventListener('click', () => {
       const tabName = btn.getAttribute('data-tab');
