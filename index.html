@@ -615,23 +615,39 @@
 
     <!-- Coding time -->
     <div class="card coding-time-card">
-      <h2>주로 저녁에 코딩.</h2>
+      <h2 id="codingTitle">코딩 시간 분석</h2>
+
       <div class="mini-grid">
-        <div class="mini-cell">
+        <div class="mini-cell" id="cellMorning">
           <span class="mini-icon">☀️</span>
-          <div><div class="mini-pct">5.8%</div><div class="mini-label">아침</div></div>
+          <div>
+            <div class="mini-pct" id="morningPct">-</div>
+            <div class="mini-label">아침</div>
+          </div>
         </div>
-        <div class="mini-cell">
+
+        <div class="mini-cell" id="cellDaytime">
           <span class="mini-icon">⛅</span>
-          <div><div class="mini-pct">25.9%</div><div class="mini-label">오후</div></div>
+          <div>
+            <div class="mini-pct" id="daytimePct">-</div>
+            <div class="mini-label">오후</div>
+          </div>
         </div>
-        <div class="mini-cell active">
+
+        <div class="mini-cell" id="cellEvening">
           <span class="mini-icon">🌥️</span>
-          <div><div class="mini-pct">34.5%</div><div class="mini-label">저녁</div></div>
+          <div>
+            <div class="mini-pct" id="eveningPct">-</div>
+            <div class="mini-label">저녁</div>
+          </div>
         </div>
-        <div class="mini-cell">
+
+        <div class="mini-cell" id="cellNight">
           <span class="mini-icon">🌙</span>
-          <div><div class="mini-pct">33.8%</div><div class="mini-label">밤과 새벽</div></div>
+          <div>
+            <div class="mini-pct" id="nightPct">-</div>
+            <div class="mini-label">밤과 새벽</div>
+          </div>
         </div>
       </div>
     </div>
@@ -865,6 +881,96 @@ function getDateFromIndex(startTimestamp, index) {
 // 실행
 loadGitHubStats();
 
+/*
+ * Gist에서 코딩 시간대 통계 가져오기
+ */
+async function loadCodingTimeStats() {
+
+  const GIST_ID = "25998c0b1481395a3e89c5d5b5d2500a";
+
+  try {
+
+    const response = await fetch(
+      `https://api.github.com/gists/${GIST_ID}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const gist = await response.json();
+
+    const file = Object.values(gist.files)[0];
+    const text = file.content;
+
+    function extract(name) {
+      const regex = new RegExp(
+        name + String.raw`\s+\d+ commits\s+.*?([\d.]+)%`
+      );
+
+      const match = text.match(regex);
+
+      return match ? parseFloat(match[1]) : 0;
+    }
+
+    const values = {
+      morning: extract("Morning"),
+      daytime: extract("Daytime"),
+      evening: extract("Evening"),
+      night: extract("Night")
+    };
+
+    document.getElementById("morningPct").textContent =
+      values.morning.toFixed(1) + "%";
+
+    document.getElementById("daytimePct").textContent =
+      values.daytime.toFixed(1) + "%";
+
+    document.getElementById("eveningPct").textContent =
+      values.evening.toFixed(1) + "%";
+
+    document.getElementById("nightPct").textContent =
+      values.night.toFixed(1) + "%";
+
+    const maxKey = Object.keys(values).reduce((a, b) =>
+      values[a] > values[b] ? a : b
+    );
+
+    ["Morning", "Daytime", "Evening", "Night"].forEach(name => {
+      document
+        .getElementById("cell" + name)
+        .classList.remove("active");
+    });
+
+    document
+      .getElementById(
+        "cell" +
+        maxKey.charAt(0).toUpperCase() +
+        maxKey.slice(1)
+      )
+      .classList.add("active");
+
+    const titleMap = {
+      morning: "주로 아침에 코딩.",
+      daytime: "주로 오후에 코딩.",
+      evening: "주로 저녁에 코딩.",
+      night: "주로 밤에 코딩."
+    };
+
+    document.getElementById("codingTitle").textContent =
+      titleMap[maxKey];
+
+  } catch (error) {
+
+    console.error("Coding Time Stats Error:", error);
+
+    document.getElementById("codingTitle").textContent =
+      "코딩 시간 통계를 불러오지 못했어요.";
+  }
+}
+
+// 실행
+loadCodingTimeStats();
 
   // 학력/자격증 탭
   document.querySelectorAll('.edu-card .tab').forEach(btn=>{
