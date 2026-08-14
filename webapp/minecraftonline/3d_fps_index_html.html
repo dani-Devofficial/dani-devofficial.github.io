@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 마인크래프트 무한맵 에디션 (FPS 최적화)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #111827;
+            color: white;
+        }
+
+        /* 크로스헤어 */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 20;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            mix-blend-mode: difference;
+        }
+        #crosshair::before {
+            top: 7px;
+            left: 0;
+            width: 16px;
+            height: 2px;
+        }
+        #crosshair::after {
+            top: 0;
+            left: 7px;
+            width: 2px;
+            height: 16px;
+        }
+
+        .hotbar-slot {
+            transition: all 0.15s ease-in-out;
+        }
+        .hotbar-slot.active {
+            border-color: #f59e0b !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .mc-button {
+            background: linear-gradient(180deg, #4c4c4c 0%, #2b2b2b 100%);
+            border: 3px solid #6b6b6b;
+            border-bottom-color: #1a1a1a;
+            border-right-color: #1a1a1a;
+            box-shadow: inset 2px 2px 0px rgba(255,255,255,0.2);
+        }
+        .mc-button:hover {
+            background: linear-gradient(180deg, #5c5c5c 0%, #3b3b3b 100%);
+            border-color: #8b8b8b;
+            border-bottom-color: #2a2a2a;
+            border-right-color: #2a2a2a;
+        }
+        .mc-button:active {
+            background: linear-gradient(180deg, #2b2b2b 0%, #4c4c4c 100%);
+            border-color: #1a1a1a;
+            border-bottom-color: #6b6b6b;
+            border-right-color: #6b6b6b;
+        }
+
+        .mc-card {
+            background: linear-gradient(180deg, #2a3441 0%, #171e27 100%);
+            border: 4px solid #374151;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+        }
+
+        .mc-progress-bar {
+            background: linear-gradient(90deg, #34d399 0%, #10b981 50%, #059669 100%);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="home-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 bg-cover bg-center" style="background-image: radial-gradient(circle, rgba(15,23,42,0.7) 0%, rgba(3,7,18,0.95) 100%), url('https://images.unsplash.com/photo-1627856013091-fed6e4e30025?q=80&w=1200&auto=format&fit=crop');">
+        
+        <div class="text-center mb-8 drop-shadow-2xl">
+            <h1 class="text-5xl md:text-6xl font-black tracking-wider text-amber-400 border-b-4 border-amber-500 pb-2 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
+                MINECRAFT
+            </h1>
+            <span class="text-emerald-400 font-bold tracking-widest text-sm bg-black/60 px-4 py-1 rounded-full mt-2 inline-block border border-emerald-500/40">
+                INFINITE WORLD (FPS OPTIMIZED)
+            </span>
+        </div>
+
+        <div class="w-full max-w-4xl px-4 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="btn-my-world" class="mc-card rounded-2xl p-4 cursor-pointer hover:border-emerald-500 transition group relative overflow-hidden">
+                    <div class="h-44 rounded-xl bg-cover bg-center mb-3 relative overflow-hidden border border-gray-700" style="background-image: url('https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=600&auto=format&fit=crop');">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
+                        <span class="absolute bottom-2 left-2 bg-black/70 text-amber-300 text-xs px-2.5 py-1 rounded border border-amber-500/30 font-bold">FPS 최적화 무한 지형</span>
+                    </div>
+                    <div class="bg-emerald-800/90 group-hover:bg-emerald-700 p-3 rounded-xl border border-emerald-600 flex items-center justify-between transition">
+                        <span class="font-bold text-lg text-white flex items-center gap-2">
+                            🌐 무한 월드 탐험하기
+                        </span>
+                        <span class="text-xs bg-emerald-950 px-2.5 py-1 rounded text-emerald-300">바로 시작</span>
+                    </div>
+                </div>
+
+                <div id="btn-library" class="mc-card rounded-2xl p-4 cursor-pointer hover:border-blue-500 transition group relative overflow-hidden">
+                    <div class="h-44 rounded-xl bg-cover bg-center mb-3 relative overflow-hidden border border-gray-700 grid grid-cols-3 gap-1 p-1 bg-slate-900">
+                        <div class="bg-cover bg-center rounded" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300&auto=format&fit=crop');"></div>
+                        <div class="bg-cover bg-center rounded" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=300&auto=format&fit=crop');"></div>
+                        <div class="bg-cover bg-center rounded" style="background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=300&auto=format&fit=crop');"></div>
+                    </div>
+                    <div class="bg-blue-800/90 group-hover:bg-blue-700 p-3 rounded-xl border border-blue-600 flex items-center justify-between transition">
+                        <span class="font-bold text-lg text-white flex items-center gap-2">
+                            🏰 샘플 성곽 마을
+                        </span>
+                        <span class="text-xs bg-blue-950 px-2.5 py-1 rounded text-blue-300">건축물 탐험</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <button id="btn-create-new" class="mc-button py-3.5 px-2 rounded-xl text-amber-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2">
+                    <span class="text-xl">➕</span> 월드 초기화
+                </button>
+                <label class="mc-button py-3.5 px-2 rounded-xl text-green-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2 cursor-pointer">
+                    <span class="text-xl">📥</span> 가져오기 (불러오기)
+                    <input type="file" id="file-import-input" accept=".json" class="hidden">
+                </label>
+                <button id="btn-export-world" class="mc-button py-3.5 px-2 rounded-xl text-cyan-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2">
+                    <span class="text-xl">📤</span> 월드 내보내기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="fixed inset-0 z-40 hidden flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md">
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-extrabold text-amber-400 mb-1">MINECRAFT</h2>
+            <p class="text-xs text-emerald-400 font-bold tracking-wider">INFINITE WORLD EDITION</p>
+        </div>
+
+        <div class="bg-gray-900 border-2 border-gray-600 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center space-y-6">
+            <div class="space-y-1">
+                <h3 id="loading-title" class="text-lg font-bold text-gray-200">월드 만드는 중</h3>
+                <p id="loading-subtitle" class="text-sm text-emerald-400 font-medium">최적화 청크 데이터 생성 중...</p>
+            </div>
+
+            <div class="w-full bg-gray-950 h-5 rounded-full p-1 border border-gray-700 overflow-hidden">
+                <div id="loading-progress" class="mc-progress-bar h-full rounded-full w-0 transition-all duration-300"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="in-game-ui" class="hidden">
+        <div id="crosshair"></div>
+
+        <div class="absolute top-4 left-4 z-10 bg-gray-900/80 backdrop-blur-md p-3 rounded-xl border border-gray-700 shadow-lg pointer-events-none font-mono">
+            <div class="flex items-center gap-2 border-b border-gray-700 pb-1 mb-1">
+                <span class="text-xs font-bold text-emerald-400">⚡ FPS:</span>
+                <span id="fps-display" class="text-base font-black text-green-400">60</span>
+            </div>
+            <h1 class="text-xs font-bold text-amber-400">⛏️ 블록 크래프트 3D</h1>
+            <div class="mt-1 flex items-center gap-2">
+                <span class="text-[11px] text-gray-300">파괴한 블록:</span>
+                <span id="score-count" class="text-xs font-bold text-amber-400">0</span>
+            </div>
+            <div class="text-[10px] text-gray-400 mt-0.5" id="coords-display">
+                X: 0, Z: 0
+            </div>
+        </div>
+
+        <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 bg-gray-900/90 backdrop-blur-md p-2 rounded-2xl border border-gray-700 shadow-2xl flex gap-2">
+            <button data-type="grass" class="hotbar-slot active w-12 h-12 rounded-xl bg-green-600 border-2 border-gray-500 flex flex-col items-center justify-center p-1 hover:border-amber-400">
+                <span class="text-[10px] font-bold text-white drop-shadow">1 잔디</span>
+            </button>
+            <button data-type="dirt" class="hotbar-slot w-12 h-12 rounded-xl bg-yellow-800 border-2 border-gray-500 flex flex-col items-center justify-center p-1 hover:border-amber-400">
+                <span class="text-[10px] font-bold text-white drop-shadow">2 흙</span>
+            </button>
+            <button data-type="stone" class="hotbar-slot w-12 h-12 rounded-xl bg-gray-500 border-2 border-gray-500 flex flex-col items-center justify-center p-1 hover:border-amber-400">
+                <span class="text-[10px] font-bold text-white drop-shadow">3 돌</span>
+            </button>
+            <button data-type="wood" class="hotbar-slot w-12 h-12 rounded-xl bg-amber-800 border-2 border-gray-500 flex flex-col items-center justify-center p-1 hover:border-amber-400">
+                <span class="text-[10px] font-bold text-white drop-shadow">4 나무</span>
+            </button>
+            <button data-type="leaves" class="hotbar-slot w-12 h-12 rounded-xl bg-emerald-700 border-2 border-gray-500 flex flex-col items-center justify-center p-1 hover:border-amber-400">
+                <span class="text-[10px] font-bold text-white drop-shadow">5 나뭇잎</span>
+            </button>
+            <button data-type="brick" class="hotbar-slot w-12 h-12 rounded-xl bg-red-700 border-2 border-gray-500 flex flex-col items-center justify-center p-1 hover:border-amber-400">
+                <span class="text-[10px] font-bold text-white drop-shadow">6 벽돌</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="pause-menu" class="fixed inset-0 z-30 hidden flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-700 p-6 rounded-2xl max-w-sm w-full text-center space-y-4 shadow-2xl">
+            <h3 class="text-2xl font-bold text-amber-400">게임 일시정지</h3>
+            <div class="space-y-2">
+                <button id="btn-resume" class="mc-button w-full py-3 rounded-xl font-bold text-white">▶️ 게임 계속하기</button>
+                <button id="btn-quit-home" class="mc-button w-full py-3 rounded-xl font-bold text-red-400">🏠 메인 메뉴로</button>
+            </div>
+            <div class="text-xs text-gray-400 text-left bg-gray-950 p-3 rounded-lg border border-gray-800 space-y-1">
+                <div>• <span class="text-yellow-400 font-semibold">WASD</span>: 이동</div>
+                <div>• <span class="text-blue-400 font-semibold">Space</span>: 점프 / <span class="text-purple-400 font-semibold">Shift</span>: 달리기</div>
+                <div>• <span class="text-red-400 font-semibold">좌클릭</span>: 파괴 / <span class="text-green-400 font-semibold">우클릭</span>: 설치</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container" class="w-full h-full"></div>
+
+    <script>
+        window.onload = function() {
+            let score = 0;
+            let selectedBlockType = 'grass';
+            
+            // 🔥 [FPS 최적화] RENDER_DISTANCE를 2로 최적화하여 렌더링할 청크 수 조정 (5x5 청크)
+            const CHUNK_SIZE = 16;
+            const RENDER_DISTANCE = 2; 
+
+            const modifiedBlocks = new Map();
+            const loadedChunks = new Map();
+            const blocks = new Map();
+            const particles = [];
+
+            // UI 요소를 캐싱
+            const homeScreen = document.getElementById('home-screen');
+            const loadingScreen = document.getElementById('loading-screen');
+            const loadingTitle = document.getElementById('loading-title');
+            const loadingSubtitle = document.getElementById('loading-subtitle');
+            const loadingProgress = document.getElementById('loading-progress');
+            const inGameUi = document.getElementById('in-game-ui');
+            const pauseMenu = document.getElementById('pause-menu');
+            const coordsDisplay = document.getElementById('coords-display');
+            const fpsDisplay = document.getElementById('fps-display');
+
+            // 🔥 FPS 측정 변수
+            let frameCount = 0;
+            let lastFpsUpdateTime = performance.now();
+
+            function safeRequestPointerLock() {
+                try {
+                    const result = document.body.requestPointerLock();
+                    if (result && typeof result.catch === 'function') {
+                        result.catch(() => {});
+                    }
+                } catch (e) {}
+            }
+
+            // Audio API
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            function playSound(type) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'break') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(140, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'place') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(280, now);
+                    osc.frequency.exponentialRampToValueAtTime(550, now + 0.06);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                }
+            }
+
+            // Three.js Scene Setup
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.FogExp2(0x87ceeb, 0.025);
+
+            const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 500);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // 🔥 [FPS 최적화] PixelRatio 제한
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Light Setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(20, 40, 15);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024; // 🔥 [FPS 최적화] 그림자 맵 1024 해상도로 경량화
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 100;
+            const d = 25;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            scene.add(dirLight);
+
+            // Pixel Texture Generator
+            function createPixelTexture(color1, color2, size = 16) {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = color1;
+                ctx.fillRect(0, 0, size, size);
+
+                for (let x = 0; x < size; x++) {
+                    for (let y = 0; y < size; y++) {
+                        if (Math.random() > 0.6) {
+                            ctx.fillStyle = color2;
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.magFilter = THREE.NearestFilter;
+                texture.minFilter = THREE.NearestFilter;
+                return texture;
+            }
+
+            const textures = {
+                grassTop: createPixelTexture('#5b8731', '#4a6e28'),
+                grassSide: createPixelTexture('#795538', '#5b8731'),
+                dirt: createPixelTexture('#795538', '#573d26'),
+                stone: createPixelTexture('#808080', '#5a5a5a'),
+                wood: createPixelTexture('#674d3c', '#4a3525'),
+                leaves: createPixelTexture('#2d8a4e', '#1c5931'),
+                brick: createPixelTexture('#a04030', '#70281d')
+            };
+
+            // 재사용할 단일 BoxGeometry
+            const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+
+            const grassMaterials = [
+                new THREE.MeshLambertMaterial({ map: textures.grassSide }),
+                new THREE.MeshLambertMaterial({ map: textures.grassSide }),
+                new THREE.MeshLambertMaterial({ map: textures.grassTop }),
+                new THREE.MeshLambertMaterial({ map: textures.dirt }),
+                new THREE.MeshLambertMaterial({ map: textures.grassSide }),
+                new THREE.MeshLambertMaterial({ map: textures.grassSide })
+            ];
+
+            const blockMaterials = {
+                grass: grassMaterials,
+                dirt: new THREE.MeshLambertMaterial({ map: textures.dirt }),
+                stone: new THREE.MeshLambertMaterial({ map: textures.stone }),
+                wood: new THREE.MeshLambertMaterial({ map: textures.wood }),
+                leaves: new THREE.MeshLambertMaterial({ map: textures.leaves, transparent: true, opacity: 0.9 }),
+                brick: new THREE.MeshLambertMaterial({ map: textures.brick })
+            };
+
+            function getKey(x, y, z) {
+                return `${Math.round(x)},${Math.round(y)},${Math.round(z)}`;
+            }
+
+            function getTerrainHeight(x, z) {
+                const n1 = Math.sin(x * 0.08) * Math.cos(z * 0.08) * 3.0;
+                const n2 = Math.sin(x * 0.03 + 1.2) * Math.sin(z * 0.03 + 1.2) * 4.5;
+                return Math.floor(n1 + n2);
+            }
+
+            function pseudoRandom(x, z) {
+                const n = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+                return n - Math.floor(n);
+            }
+
+            function getBlockType(x, y, z) {
+                const key = getKey(x, y, z);
+                if (modifiedBlocks.has(key)) return modifiedBlocks.get(key);
+
+                const rx = Math.round(x);
+                const ry = Math.round(y);
+                const rz = Math.round(z);
+                const h = getTerrainHeight(rx, rz);
+
+                if (ry === h) return 'grass';
+                if (ry < h && ry >= h - 2) return 'dirt';
+                if (ry < h - 2 && ry >= -6) return 'stone';
+
+                if (pseudoRandom(rx, rz) > 0.985) {
+                    if (ry > h && ry <= h + 4) return 'wood';
+                }
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dz = -1; dz <= 1; dz++) {
+                        const tx = rx - dx;
+                        const tz = rz - dz;
+                        const th = getTerrainHeight(tx, tz);
+                        if (pseudoRandom(tx, tz) > 0.985) {
+                            const leafBase = th + 4;
+                            if (ry >= leafBase && ry <= leafBase + 2) {
+                                if (dx === 0 && dz === 0 && ry < leafBase + 2) continue;
+                                return 'leaves';
+                            }
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            function isSolidBlock(x, y, z) {
+                return getBlockType(x, y, z) !== null;
+            }
+
+            function createBlockMesh(x, y, z, type) {
+                const mesh = new THREE.Mesh(boxGeo, blockMaterials[type]);
+                mesh.position.set(x, y, z);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.userData = { key: getKey(x, y, z), type };
+                return mesh;
+            }
+
+            function updateChunksAroundPlayer(playerX, playerZ) {
+                const currentChunkX = Math.floor(playerX / CHUNK_SIZE);
+                const currentChunkZ = Math.floor(playerZ / CHUNK_SIZE);
+
+                const neededChunks = new Set();
+
+                for (let cx = currentChunkX - RENDER_DISTANCE; cx <= currentChunkX + RENDER_DISTANCE; cx++) {
+                    for (let cz = currentChunkZ - RENDER_DISTANCE; cz <= currentChunkZ + RENDER_DISTANCE; cz++) {
+                        const chunkKey = `${cx},${cz}`;
+                        neededChunks.add(chunkKey);
+
+                        if (!loadedChunks.has(chunkKey)) {
+                            loadChunk(cx, cz);
+                        }
+                    }
+                }
+
+                loadedChunks.forEach((meshes, chunkKey) => {
+                    if (!neededChunks.has(chunkKey)) {
+                        unloadChunk(chunkKey);
+                    }
+                });
+            }
+
+            function loadChunk(cx, cz) {
+                const meshes = [];
+                const startX = cx * CHUNK_SIZE;
+                const startZ = cz * CHUNK_SIZE;
+
+                for (let x = startX; x < startX + CHUNK_SIZE; x++) {
+                    for (let z = startZ; z < startZ + CHUNK_SIZE; z++) {
+                        const h = getTerrainHeight(x, z);
+                        // 🔥 [FPS 최적화] 지형 겉 표면 및 일부 높이만 렌더링 (불필요한 고심도 매핑 차단)
+                        for (let y = h - 2; y <= h + 5; y++) {
+                            const type = getBlockType(x, y, z);
+                            if (type) {
+                                const key = getKey(x, y, z);
+                                const mesh = createBlockMesh(x, y, z, type);
+                                scene.add(mesh);
+                                meshes.push(mesh);
+                                blocks.set(key, mesh);
+                            }
+                        }
+                    }
+                }
+
+                loadedChunks.set(`${cx},${cz}`, meshes);
+            }
+
+            function unloadChunk(chunkKey) {
+                const meshes = loadedChunks.get(chunkKey);
+                if (meshes) {
+                    for (const mesh of meshes) {
+                        scene.remove(mesh);
+                        blocks.delete(mesh.userData.key);
+                    }
+                }
+                loadedChunks.delete(chunkKey);
+            }
+
+            function clearWorldData() {
+                loadedChunks.forEach((meshes, chunkKey) => unloadChunk(chunkKey));
+                loadedChunks.clear();
+                modifiedBlocks.clear();
+                blocks.clear();
+                score = 0;
+                document.getElementById('score-count').innerText = score;
+            }
+
+            function addBlock(x, y, z, type = 'grass', playSnd = true) {
+                const rx = Math.round(x);
+                const ry = Math.round(y);
+                const rz = Math.round(z);
+                const key = getKey(rx, ry, rz);
+
+                modifiedBlocks.set(key, type);
+
+                if (blocks.has(key)) {
+                    scene.remove(blocks.get(key));
+                    blocks.delete(key);
+                }
+
+                const mesh = createBlockMesh(rx, ry, rz, type);
+                scene.add(mesh);
+                blocks.set(key, mesh);
+
+                const cx = Math.floor(rx / CHUNK_SIZE);
+                const cz = Math.floor(rz / CHUNK_SIZE);
+                const chunkKey = `${cx},${cz}`;
+                if (loadedChunks.has(chunkKey)) {
+                    loadedChunks.get(chunkKey).push(mesh);
+                }
+
+                if (playSnd) playSound('place');
+            }
+
+            function removeBlock(x, y, z) {
+                const rx = Math.round(x);
+                const ry = Math.round(y);
+                const rz = Math.round(z);
+                const key = getKey(rx, ry, rz);
+
+                modifiedBlocks.set(key, null);
+
+                if (blocks.has(key)) {
+                    const mesh = blocks.get(key);
+                    createParticles(mesh.position, mesh.userData.type);
+                    scene.remove(mesh);
+                    blocks.delete(key);
+                    playSound('break');
+
+                    score++;
+                    document.getElementById('score-count').innerText = score;
+                }
+            }
+
+            function createParticles(pos, type) {
+                const particleCount = 6; // 🔥 [FPS 최적화] 파티클 수 감소
+                const pGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                let pMat = blockMaterials[type];
+                if (Array.isArray(pMat)) pMat = pMat[0];
+
+                for (let i = 0; i < particleCount; i++) {
+                    const p = new THREE.Mesh(pGeo, pMat);
+                    p.position.copy(pos).add(new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.6,
+                        (Math.random() - 0.5) * 0.6,
+                        (Math.random() - 0.5) * 0.6
+                    ));
+
+                    const velocity = new THREE.Vector3(
+                        (Math.random() - 0.5) * 2.5,
+                        Math.random() * 2.5 + 1,
+                        (Math.random() - 0.5) * 2.5
+                    );
+
+                    scene.add(p);
+                    particles.push({ mesh: p, velocity, life: 0.5 });
+                }
+            }
+
+            // Player Physics (AABB)
+            const player = {
+                position: new THREE.Vector3(0, 10, 0),
+                velocity: new THREE.Vector3(0, 0, 0),
+                height: 1.6,
+                radius: 0.3,
+                onGround: false
+            };
+
+            camera.position.copy(player.position);
+
+            let isLocked = false;
+            let yaw = 0;
+            let pitch = 0;
+
+            const keys = {
+                KeyW: false, KeyS: false, KeyA: false, KeyD: false,
+                Space: false, ShiftLeft: false, ShiftRight: false
+            };
+
+            window.addEventListener('keydown', (e) => {
+                if (e.code in keys) keys[e.code] = true;
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code in keys) keys[e.code] = false;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isLocked) return;
+                const sensitivity = 0.002;
+                yaw -= e.movementX * sensitivity;
+                pitch -= e.movementY * sensitivity;
+                pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, pitch));
+            });
+
+            function updateCameraDirection() {
+                const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
+                camera.quaternion.setFromEuler(euler);
+            }
+
+            function getIntersectingBlocks(pos) {
+                const minX = Math.floor(pos.x - player.radius + 0.5);
+                const maxX = Math.floor(pos.x + player.radius - 0.0001 + 0.5);
+                const minY = Math.floor(pos.y - player.height + 0.5);
+                const maxY = Math.floor(pos.y - 0.0001 + 0.5);
+                const minZ = Math.floor(pos.z - player.radius + 0.5);
+                const maxZ = Math.floor(pos.z + player.radius - 0.0001 + 0.5);
+
+                const result = [];
+                for (let x = minX; x <= maxX; x++) {
+                    for (let y = minY; y <= maxY; y++) {
+                        for (let z = minZ; z <= maxZ; z++) {
+                            if (isSolidBlock(x, y, z)) {
+                                result.push({ x, y, z });
+                            }
+                        }
+                    }
+                }
+                return result;
+            }
+
+            function updatePlayer(delta) {
+                if (!isLocked) return;
+                const dt = Math.min(delta, 0.05);
+
+                const speed = (keys.ShiftLeft || keys.ShiftRight) ? 7.5 : 4.5;
+                const moveDir = new THREE.Vector3();
+
+                if (keys.KeyW) moveDir.z -= 1;
+                if (keys.KeyS) moveDir.z += 1;
+                if (keys.KeyA) moveDir.x -= 1;
+                if (keys.KeyD) moveDir.x += 1;
+
+                if (moveDir.lengthSq() > 0) {
+                    moveDir.normalize();
+                    const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
+                    moveDir.applyEuler(euler);
+                }
+
+                player.velocity.x = moveDir.x * speed;
+                player.velocity.z = moveDir.z * speed;
+                player.velocity.y -= 22.0 * dt;
+
+                if (keys.Space && player.onGround) {
+                    player.velocity.y = 7.0;
+                    player.onGround = false;
+                }
+
+                // X 축
+                player.position.x += player.velocity.x * dt;
+                let collidedBlocks = getIntersectingBlocks(player.position);
+                for (const b of collidedBlocks) {
+                    if (player.velocity.x > 0) player.position.x = b.x - 0.5 - player.radius - 0.0001;
+                    else if (player.velocity.x < 0) player.position.x = b.x + 0.5 + player.radius + 0.0001;
+                    player.velocity.x = 0;
+                }
+
+                // Z 축
+                player.position.z += player.velocity.z * dt;
+                collidedBlocks = getIntersectingBlocks(player.position);
+                for (const b of collidedBlocks) {
+                    if (player.velocity.z > 0) player.position.z = b.z - 0.5 - player.radius - 0.0001;
+                    else if (player.velocity.z < 0) player.position.z = b.z + 0.5 + player.radius + 0.0001;
+                    player.velocity.z = 0;
+                }
+
+                // Y 축
+                player.position.y += player.velocity.y * dt;
+                collidedBlocks = getIntersectingBlocks(player.position);
+                if (collidedBlocks.length === 0) {
+                    player.onGround = false;
+                } else {
+                    for (const b of collidedBlocks) {
+                        if (player.velocity.y < 0) {
+                            player.position.y = b.y + 0.5 + player.height + 0.00001;
+                            player.velocity.y = 0;
+                            player.onGround = true;
+                        } else if (player.velocity.y > 0) {
+                            player.position.y = b.y - 0.5 - 0.0001;
+                            player.velocity.y = 0;
+                        }
+                    }
+                }
+
+                if (player.position.y < -30) {
+                    const spawnY = getTerrainHeight(0, 0) + 4;
+                    player.position.set(0, spawnY, 0);
+                    player.velocity.set(0, 0, 0);
+                }
+
+                camera.position.copy(player.position);
+                updateCameraDirection();
+
+                updateChunksAroundPlayer(player.position.x, player.position.z);
+                coordsDisplay.innerText = `X: ${Math.round(player.position.x)}, Z: ${Math.round(player.position.z)}`;
+            }
+
+            // Raycaster
+            const raycaster = new THREE.Raycaster();
+            const mouseVec = new THREE.Vector2(0, 0);
+
+            const highlightGeo = new THREE.BoxGeometry(1.01, 1.01, 1.01);
+            const highlightMat = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
+            const highlightBox = new THREE.Mesh(highlightGeo, highlightMat);
+            highlightBox.visible = false;
+            scene.add(highlightBox);
+
+            function getIntersection() {
+                raycaster.setFromCamera(mouseVec, camera);
+                raycaster.far = 6;
+                const blockMeshes = Array.from(blocks.values());
+                const intersects = raycaster.intersectObjects(blockMeshes);
+                return intersects.length > 0 ? intersects[0] : null;
+            }
+
+            window.addEventListener('mousedown', (e) => {
+                if (!isLocked) return;
+
+                const intersect = getIntersection();
+                if (intersect) {
+                    if (e.button === 0) {
+                        const p = intersect.object.position;
+                        removeBlock(p.x, p.y, p.z);
+                    } else if (e.button === 2) {
+                        const normal = intersect.face.normal;
+                        const p = intersect.object.position;
+                        const newX = p.x + normal.x;
+                        const newY = p.y + normal.y;
+                        const newZ = p.z + normal.z;
+
+                        const buildPos = new THREE.Vector3(newX, newY, newZ);
+                        const playerPos = player.position.clone();
+                        const feetPos = playerPos.clone().sub(new THREE.Vector3(0, player.height / 2, 0));
+
+                        if (buildPos.distanceTo(playerPos) > 0.85 && buildPos.distanceTo(feetPos) > 0.85) {
+                            addBlock(newX, newY, newZ, selectedBlockType);
+                        }
+                    }
+                }
+            });
+
+            window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Hotbar
+            const hotbarSlots = document.querySelectorAll('.hotbar-slot');
+            hotbarSlots.forEach(slot => {
+                slot.addEventListener('click', (e) => {
+                    hotbarSlots.forEach(s => s.classList.remove('active'));
+                    const btn = e.currentTarget;
+                    btn.classList.add('active');
+                    selectedBlockType = btn.getAttribute('data-type');
+                });
+            });
+
+            window.addEventListener('keydown', (e) => {
+                const keyNum = parseInt(e.key);
+                if (keyNum >= 1 && keyNum <= hotbarSlots.length) {
+                    hotbarSlots[keyNum - 1].click();
+                }
+            });
+
+            function startWorldLoading(callback) {
+                homeScreen.classList.add('hidden');
+                loadingScreen.classList.remove('hidden');
+                loadingScreen.classList.add('flex');
+                loadingProgress.style.width = '0%';
+
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.floor(Math.random() * 20) + 15;
+                    if (progress > 100) progress = 100;
+                    loadingProgress.style.width = `${progress}%`;
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            loadingScreen.classList.add('hidden');
+                            loadingScreen.classList.remove('flex');
+                            inGameUi.classList.remove('hidden');
+                            if (callback) callback();
+                            safeRequestPointerLock();
+                        }, 200);
+                    }
+                }, 80);
+            }
+
+            document.getElementById('btn-my-world').addEventListener('click', () => {
+                loadingTitle.innerText = "무한 월드 로딩 중";
+                loadingSubtitle.innerText = "최적화 지형 구성 중...";
+                startWorldLoading(() => {
+                    const startY = getTerrainHeight(0, 0) + 4;
+                    player.position.set(0, startY, 0);
+                    updateChunksAroundPlayer(0, 0);
+                });
+            });
+
+            document.getElementById('btn-library').addEventListener('click', () => {
+                loadingTitle.innerText = "성곽 마을 로딩 중";
+                loadingSubtitle.innerText = "샘플 건축물 배치 중...";
+                startWorldLoading(() => {
+                    clearWorldData();
+                    for (let x = -4; x <= 4; x++) {
+                        for (let z = -4; z <= 4; z++) {
+                            if (Math.abs(x) === 4 || Math.abs(z) === 4) {
+                                for (let y = 1; y <= 3; y++) {
+                                    addBlock(x, y, z, 'brick', false);
+                                }
+                            }
+                        }
+                    }
+                    player.position.set(0, 5, 7);
+                    updateChunksAroundPlayer(0, 7);
+                });
+            });
+
+            document.getElementById('btn-create-new').addEventListener('click', () => {
+                loadingTitle.innerText = "새 월드 초기화";
+                loadingSubtitle.innerText = "초기 청크 생성 중...";
+                startWorldLoading(() => {
+                    clearWorldData();
+                    const startY = getTerrainHeight(0, 0) + 4;
+                    player.position.set(0, startY, 0);
+                    updateChunksAroundPlayer(0, 0);
+                });
+            });
+
+            const fileImportInput = document.getElementById('file-import-input');
+            fileImportInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const saveData = JSON.parse(event.target.result);
+                        if (saveData && (Array.isArray(saveData.blocks) || Array.isArray(saveData.modifiedBlocks))) {
+                            startWorldLoading(() => {
+                                clearWorldData();
+                                const list = saveData.modifiedBlocks || saveData.blocks;
+                                list.forEach(b => addBlock(b.x, b.y, b.z, b.type, false));
+                                if (saveData.player) player.position.set(saveData.player.x, saveData.player.y, saveData.player.z);
+                                if (typeof saveData.score === 'number') {
+                                    score = saveData.score;
+                                    document.getElementById('score-count').innerText = score;
+                                }
+                                updateChunksAroundPlayer(player.position.x, player.position.z);
+                            });
+                        }
+                    } catch (err) {}
+                };
+                reader.readAsText(file);
+                fileImportInput.value = '';
+            });
+
+            document.getElementById('btn-export-world').addEventListener('click', () => {
+                const blockList = [];
+                modifiedBlocks.forEach((type, key) => {
+                    if (type !== null) {
+                        const [x, y, z] = key.split(',').map(Number);
+                        blockList.push({ x, y, z, type });
+                    }
+                });
+
+                const saveData = {
+                    version: 2,
+                    score: score,
+                    player: { x: player.position.x, y: player.position.y, z: player.position.z },
+                    modifiedBlocks: blockList
+                };
+
+                const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `minecraft_world.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            document.addEventListener('pointerlockchange', () => {
+                if (document.pointerLockElement === document.body) {
+                    isLocked = true;
+                    pauseMenu.classList.add('hidden');
+                    pauseMenu.classList.remove('flex');
+                } else {
+                    isLocked = false;
+                    if (homeScreen.classList.contains('hidden') && loadingScreen.classList.contains('hidden')) {
+                        pauseMenu.classList.remove('hidden');
+                        pauseMenu.classList.add('flex');
+                    }
+                }
+            });
+
+            document.getElementById('btn-resume').addEventListener('click', safeRequestPointerLock);
+            document.getElementById('btn-quit-home').addEventListener('click', () => {
+                pauseMenu.classList.add('hidden');
+                pauseMenu.classList.remove('flex');
+                inGameUi.classList.add('hidden');
+                homeScreen.classList.remove('hidden');
+            });
+
+            // 🔥 [FPS 카운터 측정 & 메인 애니메이션 루프]
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const now = performance.now();
+                frameCount++;
+
+                // 0.5초마다 FPS 업데이트
+                if (now - lastFpsUpdateTime >= 500) {
+                    const currentFps = Math.round((frameCount * 1000) / (now - lastFpsUpdateTime));
+                    fpsDisplay.innerText = currentFps;
+                    
+                    // FPS 숫자에 따른 색상 변경
+                    if (currentFps >= 50) fpsDisplay.className = "text-base font-black text-green-400";
+                    else if (currentFps >= 30) fpsDisplay.className = "text-base font-black text-yellow-400";
+                    else fpsDisplay.className = "text-base font-black text-red-500";
+
+                    frameCount = 0;
+                    lastFpsUpdateTime = now;
+                }
+
+                const delta = clock.getDelta();
+
+                if (isLocked) {
+                    updatePlayer(delta);
+
+                    const intersect = getIntersection();
+                    if (intersect) {
+                        highlightBox.position.copy(intersect.object.position);
+                        highlightBox.visible = true;
+                    } else {
+                        highlightBox.visible = false;
+                    }
+                } else {
+                    highlightBox.visible = false;
+                }
+
+                // 파티클 애니메이션
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.life -= delta * 3.0;
+
+                    if (p.life <= 0) {
+                        scene.remove(p.mesh);
+                        particles.splice(i, 1);
+                    } else {
+                        p.velocity.y -= 9.8 * delta;
+                        p.mesh.position.addScaledVector(p.velocity, delta);
+                        p.mesh.scale.setScalar(p.life);
+                    }
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+        };
+    </script>
+</body>
+</html>
