@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D 마인크래프트 무한맵 에디션 (FPS 최적화)</title>
+    <title>3D Block World 무한맵 에디션</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
@@ -57,33 +57,33 @@
             box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
         }
 
-        .mc-button {
+        .game-button {
             background: linear-gradient(180deg, #4c4c4c 0%, #2b2b2b 100%);
             border: 3px solid #6b6b6b;
             border-bottom-color: #1a1a1a;
             border-right-color: #1a1a1a;
             box-shadow: inset 2px 2px 0px rgba(255,255,255,0.2);
         }
-        .mc-button:hover {
+        .game-button:hover {
             background: linear-gradient(180deg, #5c5c5c 0%, #3b3b3b 100%);
             border-color: #8b8b8b;
             border-bottom-color: #2a2a2a;
             border-right-color: #2a2a2a;
         }
-        .mc-button:active {
+        .game-button:active {
             background: linear-gradient(180deg, #2b2b2b 0%, #4c4c4c 100%);
             border-color: #1a1a1a;
             border-bottom-color: #6b6b6b;
             border-right-color: #6b6b6b;
         }
 
-        .mc-card {
+        .game-card {
             background: linear-gradient(180deg, #2a3441 0%, #171e27 100%);
             border: 4px solid #374151;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
         }
 
-        .mc-progress-bar {
+        .game-progress-bar {
             background: linear-gradient(90deg, #34d399 0%, #10b981 50%, #059669 100%);
             box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
         }
@@ -95,16 +95,16 @@
         
         <div class="text-center mb-8 drop-shadow-2xl">
             <h1 class="text-5xl md:text-6xl font-black tracking-wider text-amber-400 border-b-4 border-amber-500 pb-2 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
-                MINECRAFT
+                BLOCK WORLD
             </h1>
             <span class="text-emerald-400 font-bold tracking-widest text-sm bg-black/60 px-4 py-1 rounded-full mt-2 inline-block border border-emerald-500/40">
-                INFINITE WORLD (FPS OPTIMIZED)
+                INFINITE WORLD
             </span>
         </div>
 
         <div class="w-full max-w-4xl px-4 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div id="btn-my-world" class="mc-card rounded-2xl p-4 cursor-pointer hover:border-emerald-500 transition group relative overflow-hidden">
+                <div id="btn-my-world" class="game-card rounded-2xl p-4 cursor-pointer hover:border-emerald-500 transition group relative overflow-hidden">
                     <div class="h-44 rounded-xl bg-cover bg-center mb-3 relative overflow-hidden border border-gray-700" style="background-image: url('https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=600&auto=format&fit=crop');">
                         <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
                         <span class="absolute bottom-2 left-2 bg-black/70 text-amber-300 text-xs px-2.5 py-1 rounded border border-amber-500/30 font-bold">FPS 최적화 무한 지형</span>
@@ -117,7 +117,7 @@
                     </div>
                 </div>
 
-                <div id="btn-library" class="mc-card rounded-2xl p-4 cursor-pointer hover:border-blue-500 transition group relative overflow-hidden">
+                <div id="btn-library" class="game-card rounded-2xl p-4 cursor-pointer hover:border-blue-500 transition group relative overflow-hidden">
                     <div class="h-44 rounded-xl bg-cover bg-center mb-3 relative overflow-hidden border border-gray-700 grid grid-cols-3 gap-1 p-1 bg-slate-900">
                         <div class="bg-cover bg-center rounded" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300&auto=format&fit=crop');"></div>
                         <div class="bg-cover bg-center rounded" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=300&auto=format&fit=crop');"></div>
@@ -133,14 +133,14 @@
             </div>
 
             <div class="grid grid-cols-3 gap-4">
-                <button id="btn-create-new" class="mc-button py-3.5 px-2 rounded-xl text-amber-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2">
+                <button id="btn-create-new" class="game-button py-3.5 px-2 rounded-xl text-amber-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2">
                     <span class="text-xl">➕</span> 월드 초기화
                 </button>
-                <label class="mc-button py-3.5 px-2 rounded-xl text-green-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2 cursor-pointer">
+                <label class="game-button py-3.5 px-2 rounded-xl text-green-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2 cursor-pointer">
                     <span class="text-xl">📥</span> 가져오기 (불러오기)
                     <input type="file" id="file-import-input" accept=".json" class="hidden">
                 </label>
-                <button id="btn-export-world" class="mc-button py-3.5 px-2 rounded-xl text-cyan-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2">
+                <button id="btn-export-world" class="game-button py-3.5 px-2 rounded-xl text-cyan-300 font-bold text-sm md:text-base flex flex-col md:flex-row items-center justify-center gap-2">
                     <span class="text-xl">📤</span> 월드 내보내기
                 </button>
             </div>
@@ -149,7 +149,7 @@
 
     <div id="loading-screen" class="fixed inset-0 z-40 hidden flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md">
         <div class="text-center mb-6">
-            <h2 class="text-3xl font-extrabold text-amber-400 mb-1">MINECRAFT</h2>
+            <h2 class="text-3xl font-extrabold text-amber-400 mb-1">BLOCK WORLD</h2>
             <p class="text-xs text-emerald-400 font-bold tracking-wider">INFINITE WORLD EDITION</p>
         </div>
 
@@ -160,7 +160,7 @@
             </div>
 
             <div class="w-full bg-gray-950 h-5 rounded-full p-1 border border-gray-700 overflow-hidden">
-                <div id="loading-progress" class="mc-progress-bar h-full rounded-full w-0 transition-all duration-300"></div>
+                <div id="loading-progress" class="game-progress-bar h-full rounded-full w-0 transition-all duration-300"></div>
             </div>
         </div>
     </div>
@@ -209,8 +209,8 @@
         <div class="bg-gray-900 border border-gray-700 p-6 rounded-2xl max-w-sm w-full text-center space-y-4 shadow-2xl">
             <h3 class="text-2xl font-bold text-amber-400">게임 일시정지</h3>
             <div class="space-y-2">
-                <button id="btn-resume" class="mc-button w-full py-3 rounded-xl font-bold text-white">▶️ 게임 계속하기</button>
-                <button id="btn-quit-home" class="mc-button w-full py-3 rounded-xl font-bold text-red-400">🏠 메인 메뉴로</button>
+                <button id="btn-resume" class="game-button w-full py-3 rounded-xl font-bold text-white">▶️ 게임 계속하기</button>
+                <button id="btn-quit-home" class="game-button w-full py-3 rounded-xl font-bold text-red-400">🏠 메인 메뉴로</button>
             </div>
             <div class="text-xs text-gray-400 text-left bg-gray-950 p-3 rounded-lg border border-gray-800 space-y-1">
                 <div>• <span class="text-yellow-400 font-semibold">WASD</span>: 이동</div>
@@ -513,6 +513,20 @@
                 const rz = Math.round(z);
                 const key = getKey(rx, ry, rz);
 
+                // 플레이어 내부에는 블록을 설치하지 않습니다.
+                const blockCenter = new THREE.Vector3(rx, ry, rz);
+                const playerMinY = player.position.y - player.height;
+                const playerMaxY = player.position.y;
+                const overlapsPlayer =
+                    player.position.x + player.radius > rx - 0.5 &&
+                    player.position.x - player.radius < rx + 0.5 &&
+                    playerMaxY > ry - 0.5 &&
+                    playerMinY < ry + 0.5 &&
+                    player.position.z + player.radius > rz - 0.5 &&
+                    player.position.z - player.radius < rz + 0.5;
+
+                if (overlapsPlayer) return;
+
                 modifiedBlocks.set(key, type);
 
                 if (blocks.has(key)) {
@@ -621,30 +635,59 @@
             }
 
             function getIntersectingBlocks(pos) {
-                const minX = Math.floor(pos.x - player.radius + 0.5);
-                const maxX = Math.floor(pos.x + player.radius - 0.0001 + 0.5);
-                const minY = Math.floor(pos.y - player.height + 0.5);
-                const maxY = Math.floor(pos.y - 0.0001 + 0.5);
-                const minZ = Math.floor(pos.z - player.radius + 0.5);
-                const maxZ = Math.floor(pos.z + player.radius - 0.0001 + 0.5);
+                // 플레이어의 실제 AABB를 기준으로 충돌을 계산합니다.
+                // position.y는 카메라(머리) 높이이고, 발 위치는 position.y - height입니다.
+                const minX = Math.floor(pos.x - player.radius - 0.5);
+                const maxX = Math.floor(pos.x + player.radius + 0.5);
+                const minY = Math.floor(pos.y - player.height - 0.5);
+                const maxY = Math.floor(pos.y + 0.5);
+                const minZ = Math.floor(pos.z - player.radius - 0.5);
+                const maxZ = Math.floor(pos.z + player.radius + 0.5);
+
+                const playerMinX = pos.x - player.radius;
+                const playerMaxX = pos.x + player.radius;
+                const playerMinY = pos.y - player.height;
+                const playerMaxY = pos.y;
+                const playerMinZ = pos.z - player.radius;
+                const playerMaxZ = pos.z;
 
                 const result = [];
+
                 for (let x = minX; x <= maxX; x++) {
                     for (let y = minY; y <= maxY; y++) {
                         for (let z = minZ; z <= maxZ; z++) {
-                            if (isSolidBlock(x, y, z)) {
+                            if (!isSolidBlock(x, y, z)) continue;
+
+                            const blockMinX = x - 0.5;
+                            const blockMaxX = x + 0.5;
+                            const blockMinY = y - 0.5;
+                            const blockMaxY = y + 0.5;
+                            const blockMinZ = z - 0.5;
+                            const blockMaxZ = z + 0.5;
+
+                            const overlaps =
+                                playerMaxX > blockMinX &&
+                                playerMinX < blockMaxX &&
+                                playerMaxY > blockMinY &&
+                                playerMinY < blockMaxY &&
+                                playerMaxZ > blockMinZ &&
+                                playerMinZ < blockMaxZ;
+
+                            if (overlaps) {
                                 result.push({ x, y, z });
                             }
                         }
                     }
                 }
+
                 return result;
             }
 
             function updatePlayer(delta) {
                 if (!isLocked) return;
-                const dt = Math.min(delta, 0.05);
 
+                const dt = Math.min(delta, 0.05);
+                const epsilon = 0.0001;
                 const speed = (keys.ShiftLeft || keys.ShiftRight) ? 7.5 : 4.5;
                 const moveDir = new THREE.Vector3();
 
@@ -668,37 +711,56 @@
                     player.onGround = false;
                 }
 
-                // X 축
+                // X 축 충돌
                 player.position.x += player.velocity.x * dt;
                 let collidedBlocks = getIntersectingBlocks(player.position);
+
                 for (const b of collidedBlocks) {
-                    if (player.velocity.x > 0) player.position.x = b.x - 0.5 - player.radius - 0.0001;
-                    else if (player.velocity.x < 0) player.position.x = b.x + 0.5 + player.radius + 0.0001;
+                    if (player.velocity.x > 0) {
+                        player.position.x = b.x - 0.5 - player.radius - epsilon;
+                    } else if (player.velocity.x < 0) {
+                        player.position.x = b.x + 0.5 + player.radius + epsilon;
+                    }
                     player.velocity.x = 0;
                 }
 
-                // Z 축
+                // Z 축 충돌
                 player.position.z += player.velocity.z * dt;
                 collidedBlocks = getIntersectingBlocks(player.position);
+
                 for (const b of collidedBlocks) {
-                    if (player.velocity.z > 0) player.position.z = b.z - 0.5 - player.radius - 0.0001;
-                    else if (player.velocity.z < 0) player.position.z = b.z + 0.5 + player.radius + 0.0001;
+                    if (player.velocity.z > 0) {
+                        player.position.z = b.z - 0.5 - player.radius - epsilon;
+                    } else if (player.velocity.z < 0) {
+                        player.position.z = b.z + 0.5 + player.radius + epsilon;
+                    }
                     player.velocity.z = 0;
                 }
 
-                // Y 축
+                // Y 축 충돌
+                const wasFalling = player.velocity.y < 0;
                 player.position.y += player.velocity.y * dt;
                 collidedBlocks = getIntersectingBlocks(player.position);
-                if (collidedBlocks.length === 0) {
-                    player.onGround = false;
-                } else {
-                    for (const b of collidedBlocks) {
-                        if (player.velocity.y < 0) {
-                            player.position.y = b.y + 0.5 + player.height + 0.00001;
+                player.onGround = false;
+
+                for (const b of collidedBlocks) {
+                    if (wasFalling) {
+                        // 발이 블록 윗면에 정확히 닿도록 이동합니다.
+                        const blockTop = b.y + 0.5;
+                        const correctedY = blockTop + player.height + epsilon;
+
+                        if (player.position.y < correctedY) {
+                            player.position.y = correctedY;
                             player.velocity.y = 0;
                             player.onGround = true;
-                        } else if (player.velocity.y > 0) {
-                            player.position.y = b.y - 0.5 - 0.0001;
+                        }
+                    } else if (player.velocity.y > 0) {
+                        // 머리가 블록 아랫면을 뚫지 않도록 처리합니다.
+                        const blockBottom = b.y - 0.5;
+                        const correctedY = blockBottom - epsilon;
+
+                        if (player.position.y > correctedY) {
+                            player.position.y = correctedY;
                             player.velocity.y = 0;
                         }
                     }
@@ -708,6 +770,7 @@
                     const spawnY = getTerrainHeight(0, 0) + 4;
                     player.position.set(0, spawnY, 0);
                     player.velocity.set(0, 0, 0);
+                    player.onGround = false;
                 }
 
                 camera.position.copy(player.position);
@@ -900,7 +963,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `minecraft_world.json`;
+                a.download = `blockworld_world.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             });

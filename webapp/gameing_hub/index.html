@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameHub</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial, "Noto Sans KR", sans-serif;
+    background:#171a21;
+    color:#fff;
+    min-height:100vh;
+}
+
+/* 상단바 */
+.topbar{
+    height:76px;
+    background:#171a21;
+    display:flex;
+    align-items:center;
+    padding:0 7%;
+    border-bottom:1px solid #252a34;
+}
+
+.logo{
+    font-size:27px;
+    font-weight:bold;
+    letter-spacing:-1px;
+}
+
+.logo span{
+    color:#66c0f4;
+}
+
+/* 메인 */
+.container{
+    width:86%;
+    max-width:1400px;
+    margin:0 auto;
+}
+
+/* 검색 */
+.search-area{
+    display:flex;
+    justify-content:flex-end;
+    padding:28px 0 15px;
+}
+
+.search{
+    width:270px;
+    background:#202631;
+    border:1px solid #303946;
+    border-radius:12px;
+    padding:12px 15px;
+    color:white;
+    outline:none;
+    transition:.2s;
+}
+
+.search:focus{
+    border-color:#66c0f4;
+    box-shadow:0 0 0 3px rgba(102,192,244,.08);
+}
+
+/* 히어로 */
+.hero{
+    height:430px;
+    margin-top:10px;
+    border-radius:16px;
+    overflow:hidden;
+    position:relative;
+    background:
+        radial-gradient(circle at 75% 35%,rgba(60,180,255,.55),transparent 30%),
+        linear-gradient(110deg,#09131e,#123e5c 55%,#07141e);
+    box-shadow:0 15px 40px rgba(0,0,0,.45);
+    transition:background .4s ease, box-shadow .3s ease;
+}
+
+.hero::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+        90deg,
+        rgba(0,0,0,.82),
+        rgba(0,0,0,.35),
+        transparent
+    );
+}
+
+.hero-content{
+    position:absolute;
+    z-index:2;
+    left:55px;
+    top:65px;
+    max-width:500px;
+}
+
+.badge{
+    display:inline-block;
+    background:#66c0f4;
+    color:#101820;
+    padding:7px 13px;
+    font-size:12px;
+    font-weight:bold;
+    border-radius:999px;
+    margin-bottom:18px;
+}
+
+.hero h1{
+    font-size:48px;
+    line-height:1.05;
+    margin-bottom:18px;
+}
+
+.hero p{
+    color:#d5e3ed;
+    line-height:1.7;
+    font-size:15px;
+}
+
+.hero-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:28px;
+}
+
+.btn{
+    border:0;
+    padding:13px 23px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:.2s;
+}
+
+.play{
+    background:#66c0f4;
+    color:#10202c;
+}
+
+.play:hover{
+    background:#8bd2fa;
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(102,192,244,.18);
+}
+
+/* 섹션 */
+.section{
+    margin-top:45px;
+}
+
+.section-header{
+    display:flex;
+    align-items:center;
+    margin-bottom:17px;
+}
+
+.section-title{
+    font-size:23px;
+}
+
+/* 게임 카드 */
+.games{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+}
+
+.game{
+    background:#20242c;
+    border-radius:12px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease,
+        background .25s ease;
+}
+
+.game:hover{
+    transform:translateY(-6px);
+    box-shadow:0 14px 32px rgba(0,0,0,.42);
+    background:#252a33;
+}
+
+.cover{
+    height:190px;
+    position:relative;
+    overflow:hidden;
+}
+
+.cover::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+        180deg,
+        transparent 45%,
+        rgba(0,0,0,.45)
+    );
+}
+
+.cover-1{
+    background:
+        radial-gradient(circle at 65% 35%,#ff9b3d,transparent 16%),
+        linear-gradient(135deg,#27121a,#8e332d,#e37c32);
+}
+
+.cover-2{
+    background:
+        radial-gradient(circle at 70% 30%,#72e8ff,transparent 17%),
+        linear-gradient(135deg,#071a32,#154e77,#10253f);
+}
+
+.cover-3{
+    background:
+        radial-gradient(circle at 40% 35%,#d4ff6b,transparent 14%),
+        linear-gradient(135deg,#13210e,#315d20,#172f19);
+}
+
+.cover-4{
+    background:
+        radial-gradient(circle at 65% 35%,#ff62bd,transparent 15%),
+        linear-gradient(135deg,#21102b,#702b73,#191b47);
+}
+
+.cover-title{
+    position:absolute;
+    z-index:2;
+    bottom:18px;
+    left:18px;
+    font-size:23px;
+    font-weight:bold;
+    text-shadow:0 2px 8px #000;
+}
+
+.game-info{
+    padding:16px;
+}
+
+.game-name{
+    font-size:16px;
+    margin-bottom:7px;
+}
+
+.game-meta{
+    color:#8f98a5;
+    font-size:12px;
+}
+
+.game-price{
+    color:#66c0f4;
+    margin-top:12px;
+    font-weight:bold;
+}
+
+/* 푸터 */
+footer{
+    margin-top:70px;
+    padding:35px 0;
+    color:#697482;
+    font-size:12px;
+    border-top:1px solid #252a34;
+}
+
+/* 반응형 */
+@media(max-width:1000px){
+
+    .games{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .hero h1{
+        font-size:38px;
+    }
+
+}
+
+@media(max-width:650px){
+
+    .topbar{
+        padding:0 20px;
+    }
+
+    .container{
+        width:92%;
+    }
+
+    .hero{
+        height:480px;
+        border-radius:14px;
+    }
+
+    .hero-content{
+        left:28px;
+        right:28px;
+        top:45px;
+    }
+
+    .hero h1{
+        font-size:35px;
+    }
+
+    .games{
+        grid-template-columns:1fr;
+    }
+
+    .search{
+        width:100%;
+    }
+
+    .search-area{
+        justify-content:stretch;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <div class="logo">
+        GAME<span>HUB</span>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- 검색 -->
+    <div class="search-area">
+        <input
+            class="search"
+            type="text"
+            placeholder="게임 검색..."
+            oninput="searchGames(this.value)"
+        >
+    </div>
+
+    <!-- Featured Game -->
+    <section class="hero" id="featuredGame">
+
+        <div class="hero-content">
+
+            <div class="badge">
+                FEATURED GAME
+            </div>
+
+            <h1 id="featuredTitle">
+                NEON<br>FRONTIER
+            </h1>
+
+            <p id="featuredDescription">
+                게임을 불러오는 중...
+            </p>
+
+            <div class="hero-buttons">
+
+                <button
+                    class="btn play"
+                    onclick="playFeaturedGame()"
+                >
+                    ▶ 플레이
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- 게임 -->
+    <section class="section">
+
+        <div class="section-header">
+
+            <h2 class="section-title">
+                🔥 게임
+            </h2>
+
+        </div>
+
+        <div class="games">
+
+            <article
+                class="game"
+                data-name="BLOCK WORLD"
+                data-description="온라인 세계에서 탐험하고 건축하세요."
+                data-background="radial-gradient(circle at 75% 35%,rgba(255,155,61,.55),transparent 30%),linear-gradient(110deg,#27121a,#8e332d 55%,#171014)"
+            >
+
+                <div class="cover cover-1">
+
+                    <div class="cover-title">
+                        BLOCK<br>WORLD
+                    </div>
+
+                </div>
+
+                <div class="game-info">
+
+                    <div class="game-name">
+                        BLOCK WORLD
+                    </div>
+
+                    <div class="game-meta">
+                        샌드박스 · 건축
+                    </div>
+
+                    <div class="game-price">
+                        무료
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <article
+                class="game"
+                data-name="Deep Space"
+                data-description="미지의 우주를 탐험하고 새로운 세계를 발견하세요."
+                data-background="radial-gradient(circle at 75% 35%,rgba(114,232,255,.55),transparent 30%),linear-gradient(110deg,#071a32,#154e77 55%,#08131e)"
+            >
+
+                <div class="cover cover-2">
+
+                    <div class="cover-title">
+                        DEEP<br>SPACE
+                    </div>
+
+                </div>
+
+                <div class="game-info">
+
+                    <div class="game-name">
+                        Deep Space
+                    </div>
+
+                    <div class="game-meta">
+                        SF · 어드벤처
+                    </div>
+
+                    <div class="game-price">
+                        무료
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <article
+                class="game"
+                data-name="Wild Lands"
+                data-description="끝없는 자연 속에서 살아남으며 새로운 지역을 탐험하세요."
+                data-background="radial-gradient(circle at 75% 35%,rgba(212,255,107,.5),transparent 30%),linear-gradient(110deg,#13210e,#315d20 55%,#0d170e)"
+            >
+
+                <div class="cover cover-3">
+
+                    <div class="cover-title">
+                        WILD<br>LANDS
+                    </div>
+
+                </div>
+
+                <div class="game-info">
+
+                    <div class="game-name">
+                        Wild Lands
+                    </div>
+
+                    <div class="game-meta">
+                        생존 · 오픈월드
+                    </div>
+
+                    <div class="game-price">
+                        무료
+                    </div>
+
+                </div>
+
+            </article>
+
+
+            <article
+                class="game"
+                data-name="Dream City"
+                data-description="나만의 도시를 만들고 자유롭게 운영해보세요."
+                data-background="radial-gradient(circle at 75% 35%,rgba(255,98,189,.55),transparent 30%),linear-gradient(110deg,#21102b,#702b73 55%,#11112b)"
+            >
+
+                <div class="cover cover-4">
+
+                    <div class="cover-title">
+                        DREAM<br>CITY
+                    </div>
+
+                </div>
+
+                <div class="game-info">
+
+                    <div class="game-name">
+                        Dream City
+                    </div>
+
+                    <div class="game-meta">
+                        시뮬레이션 · 캐주얼
+                    </div>
+
+                    <div class="game-price">
+                        무료
+                    </div>
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+    <footer>
+        GAMEHUB by Dani
+    </footer>
+
+</main>
+
+<script>
+
+/* =========================================
+   게임 링크
+   ========================================= */
+
+const gamelinks = {
+    "BLOCK WORLD": "./game/blworld.html",
+    "Deep Space": "https://example.com/deep-space",
+    "Wild Lands": "https://example.com/wild-lands",
+    "Dream City": "https://example.com/dream-city"
+};
+
+
+/* =========================================
+   Featured Game 랜덤 선택
+   ========================================= */
+
+const gameElements =
+    document.querySelectorAll(".game");
+
+let featuredGame = null;
+
+function selectFeaturedGame(){
+
+    if(gameElements.length === 0){
+        return;
+    }
+
+    const randomIndex =
+        Math.floor(Math.random() * gameElements.length);
+
+    featuredGame =
+        gameElements[randomIndex];
+
+    const name =
+        featuredGame.dataset.name;
+
+    const description =
+        featuredGame.dataset.description;
+
+    const background =
+        featuredGame.dataset.background;
+
+    document.getElementById("featuredTitle").innerHTML =
+        name.replace(" ", "<br>");
+
+    document.getElementById("featuredDescription").textContent =
+        description;
+
+    document.getElementById("featuredGame").style.background =
+        background;
+}
+
+
+/* =========================================
+   Featured Game 실행
+   ========================================= */
+
+function playFeaturedGame(){
+
+    if(!featuredGame){
+        return;
+    }
+
+    const name =
+        featuredGame.dataset.name;
+
+    const link =
+        gamelinks[name];
+
+    if(link){
+        window.location.href = link;
+    }
+
+}
+
+
+/* =========================================
+   게임 검색
+   ========================================= */
+
+function searchGames(value){
+
+    const games =
+        document.querySelectorAll(".game");
+
+    value =
+        value.toLowerCase();
+
+    games.forEach(game => {
+
+        const name =
+            game.dataset.name.toLowerCase();
+
+        if(name.includes(value)){
+            game.style.display = "";
+        }
+        else{
+            game.style.display = "none";
+        }
+
+    });
+
+}
+
+
+/* =========================================
+   게임 카드 클릭
+   ========================================= */
+
+document.querySelectorAll(".game").forEach(game => {
+
+    game.addEventListener("click", () => {
+
+        const name =
+            game.dataset.name;
+
+        const link =
+            gamelinks[name];
+
+        if(link){
+            window.location.href = link;
+        }
+
+    });
+
+});
+
+
+/* =========================================
+   페이지 시작
+   ========================================= */
+
+selectFeaturedGame();
+
+</script>
+
+</body>
+</html>
