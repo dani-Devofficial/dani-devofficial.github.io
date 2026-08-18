@@ -805,16 +805,69 @@
   <button data-tab="projects">Projects</button>
 </div>
 <script>
-  // 실시간 시계 (서울 시간 기준)
-  function updateClock(){
-    const now = new Date();
-    const seoul = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
-    const hh = String(seoul.getHours()).padStart(2,'0');
-    const mm = String(seoul.getMinutes()).padStart(2,'0');
-    document.getElementById('clockTime').innerHTML = hh + '<br>' + mm;
-  }
-  updateClock();
-  setInterval(updateClock, 1000 * 30);
+    // 실시간 시계 (대한민국 표준시 기준)
+    let serverTime = null;
+    let clientSyncTime = null;
+
+    async function syncClock() {
+      try {
+        const response = await fetch(
+          'https://time.now/developer/api/timezone/Asia/Seoul',
+          { cache: 'no-store' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // API가 알려준 실제 서울 시간
+        serverTime = new Date(data.datetime).getTime();
+
+        // 이 순간의 브라우저 경과시간을 저장
+        clientSyncTime = performance.now();
+
+        updateClock();
+
+      } catch (error) {
+        console.error('서울 시간 동기화 실패:', error);
+      }
+    }
+
+    function updateClock() {
+      if (serverTime === null || clientSyncTime === null) {
+        return;
+      }
+
+      // PC의 Date()를 사용하지 않고,
+      // 서버에서 받은 시간을 기준으로 경과 시간을 더함
+      const now =
+        serverTime +
+        (performance.now() - clientSyncTime);
+
+      const parts = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).formatToParts(new Date(now));
+
+      const hh = parts.find(p => p.type === 'hour').value;
+      const mm = parts.find(p => p.type === 'minute').value;
+
+      document.getElementById('clockTime').innerHTML =
+        hh + '<br>' + mm;
+    }
+
+    // 처음 동기화
+    syncClock();
+
+    // 화면은 1초마다 갱신
+    setInterval(updateClock, 1000);
+
+    // 5분마다 실제 시간 서버와 재동기화
+    setInterval(syncClock, 5 * 60 * 1000);
   
   /*
  * GitHub API에서 실제 정보 가져오기
