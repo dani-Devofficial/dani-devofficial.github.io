@@ -386,6 +386,96 @@
     gap: 6px;
   }
 
+  /* ---------- Current Project card ---------- */
+
+  .current-project-card{
+    min-height: 280px;
+  }
+
+  .project-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 12px;
+  }
+
+  .project-label{
+    display:block;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-faint);
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  .current-project-card h2{
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .project-status{
+    background: #dff5e5;
+    color: #278044;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .project-description{
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-sub);
+  }
+
+  .project-box{
+    margin-top: 18px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    display:flex;
+    align-items:center;
+    gap: 12px;
+  }
+
+  .project-icon{
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--purple);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 19px;
+    flex-shrink: 0;
+  }
+
+  .project-name{
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .project-sub{
+    margin-top: 3px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+  }
+
+  .project-link{
+    margin-top: auto;
+    align-self: flex-end;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+
+  .project-link:hover{
+    color: var(--purple);
+  }
+
 
 
   /* ---------- Quote + MBTI + Navy row ---------- */
@@ -673,6 +763,37 @@
         <div class="mbti-pill letter t">T</div>
         <div class="mbti-pill letter j">J</div>
       </div>
+    </div>
+
+    <!-- Current Project -->
+    <div class="card current-project-card">
+      <div class="project-header">
+        <div>
+          <span class="project-label">CURRENT PROJECT</span>
+          <h2>🔥 지금 열코</h2>
+        </div>
+        <span class="project-status">개발 중</span>
+      </div>
+
+      <p class="project-description">
+        지금 가장 열심히 만들고 있는 메인 프로젝트예요.
+      </p>
+
+      <div class="project-box">
+        <div class="project-icon">💻</div>
+
+        <div>
+          <div class="project-name">DaniTools</div>
+          <div class="project-sub">
+            창(window) 형태로 이루어진 도구 모음 프로그램입니다.
+          </div>
+        </div>
+        <div>
+          <div class="project-name">Gameing Hub</div>
+          <div class="project-sub">
+            온라인에서 바로 게임을 즐길 수 있습니다!
+          </div>
+        </div>
     </div>
 
   </div>
