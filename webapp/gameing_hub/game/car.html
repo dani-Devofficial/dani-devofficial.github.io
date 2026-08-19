@@ -962,6 +962,7 @@
     State.posX = Math.floor(State.posX / BLOCK_SIZE) * BLOCK_SIZE + BLOCK_SIZE/2; // Center of block
     State.posZ = Math.floor(State.posZ / BLOCK_SIZE) * BLOCK_SIZE + BLOCK_SIZE/2;
     State.angle = 0; State.speed = 0; State.posY = 0;
+    State.battery = 100;
     showToast("REPOSITIONED", "안전한 도로 중앙으로 복귀했습니다.");
   }
 
