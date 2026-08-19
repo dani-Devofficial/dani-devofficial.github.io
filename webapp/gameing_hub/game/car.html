@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Car Simulater</title>
+  <title>Car Simulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -164,10 +164,10 @@
       INFINITE OPEN WORLD SIMULATOR
     </div>
     <h1 class="text-5xl md:text-6xl font-black text-white font-orbitron tracking-tighter mb-3 relative z-10 drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-      CAR <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-500">SIMULATER</span>
+      CAR <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-500">SIMULATOR</span>
     </h1>
     <p class="text-slate-300 mb-10 font-medium relative z-10 text-lg">
-      고품질 보도블럭 도시 & 리얼 드리프트 시뮬레이터
+      현실적인 3D 자동차 시뮬레이터
     </p>
 
     <!-- Vehicle Selection Cards -->
@@ -297,8 +297,9 @@
     speed: 0,
     rpm: 800,
     steering: 0,
-    angle: 0,
+    angle: 0, // 0 means facing +Z direction in Three.js world, but player drives +X or +Z ? Actually 0 angle means forward in +Z in this code's math
     posX: 0,
+    posY: 0, // Added posY for sidewalk bump
     posZ: 0,
     gear: 'D',
     nitro: 100,
@@ -326,7 +327,7 @@
   const particleCount = 400;
   let particleIdx = 0;
 
-  // Skid Marks System (Real-time burnout marks on ground)
+  // Skid Marks System
   const MAX_SKID_MARKS = 300;
   let skidMarkPool = [];
   let skidMarkIndex = 0;
@@ -337,16 +338,22 @@
   const BUILDING_SPACE = BLOCK_SIZE - ROAD_WIDTH;
   let groundPlane;
   let bldgMeshes = [];
-  let sidewalkMesh = null; // Instanced elevated sidewalks
+  let sidewalkMesh = null;
   const INSTANCE_GRID_RADIUS = 10;
   const MAX_INSTANCES = (INSTANCE_GRID_RADIUS * 2 + 1) * (INSTANCE_GRID_RADIUS * 2 + 1);
   let lastBlockX = -999, lastBlockZ = -999;
   let activeColliders = [];
+  let sidewalkAreas = []; // To track sidewalk areas for bump logic
+
+  // NPC Traffic System Variables
+  const npcCars = [];
+  const MAX_NPC_CARS = 20;
 
   window.addEventListener('load', () => {
     initThree();
     initInfiniteCity();
     initSkidMarkPool();
+    initNPCCars();
     buildHighPolyCar(State.selectedCar);
     setupUIAndEvents();
     initMinimap();
@@ -391,24 +398,16 @@
     particleGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const opacities = new Float32Array(particleCount);
-    const sizes = new Float32Array(particleCount);
-
     for(let i = 0; i < particleCount; i++) {
       positions[i*3] = 0; positions[i*3+1] = -999; positions[i*3+2] = 0;
       opacities[i] = 0;
-      sizes[i] = 2.0;
     }
     particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     particleGeo.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1));
 
     particleMat = new THREE.PointsMaterial({
-      color: 0xeeeeee,
-      size: 4.5,
-      transparent: true,
-      opacity: 0.7,
-      depthWrite: false,
-      map: createSmokeTexture(),
-      blending: THREE.NormalBlending
+      color: 0xeeeeee, size: 4.5, transparent: true, opacity: 0.7,
+      depthWrite: false, map: createSmokeTexture(), blending: THREE.NormalBlending
     });
     particleSystem = new THREE.Points(particleGeo, particleMat);
     scene.add(particleSystem);
@@ -433,36 +432,28 @@
     return sn - Math.floor(sn);
   }
 
-  // Generate Road Texture with Asphalt & Lane Markings
   function generateRoadTexture() {
     const canvas = document.createElement('canvas');
     const size = 1024;
     canvas.width = size; canvas.height = size;
     const ctx = canvas.getContext('2d');
 
-    // Base Dark Asphalt
     ctx.fillStyle = '#1b222d';
     ctx.fillRect(0, 0, size, size);
-
-    // Fine Asphalt Grain
     for(let i=0; i<40000; i++) {
       ctx.fillStyle = Math.random() > 0.5 ? '#111827' : '#2d3748';
       ctx.fillRect(Math.random()*size, Math.random()*size, 2, 2);
     }
-
     const roadPx = (ROAD_WIDTH / BLOCK_SIZE) * size;
     const offset = (size - roadPx) / 2;
 
-    // Asphalt curb border line
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 6;
     ctx.strokeRect(offset, offset, size - offset*2, size - offset*2);
 
-    // Yellow Dashed Lane Lines
     ctx.strokeStyle = '#facc15';
     ctx.lineWidth = 5;
     ctx.setLineDash([35, 35]);
-
     ctx.beginPath(); ctx.moveTo(0, size/2); ctx.lineTo(size, size/2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(size/2, 0); ctx.lineTo(size/2, size); ctx.stroke();
 
@@ -472,34 +463,26 @@
     return tex;
   }
 
-  // Generate Sidewalk Block Texture (보도블럭 타일 패턴)
   function generateSidewalkTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512; canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    // Base Concrete Color
     ctx.fillStyle = '#64748b';
     ctx.fillRect(0, 0, 512, 512);
-
-    // Draw Sidewalk Tiles (보도블럭 격자 패턴)
     const tileSize = 32;
     ctx.lineWidth = 2;
 
     for (let x = 0; x < 512; x += tileSize) {
       for (let y = 0; y < 512; y += tileSize) {
-        // Subtle color variations between tiles
         const v = Math.floor(180 + Math.random() * 25);
         ctx.fillStyle = `rgb(${v},${v+5},${v+10})`;
         ctx.fillRect(x, y, tileSize, tileSize);
-
-        // Tile bevel border
         ctx.strokeStyle = '#475569';
         ctx.strokeRect(x, y, tileSize, tileSize);
       }
     }
 
-    // Red and White striped curb texture edge (경계석)
     const curbW = 16;
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(0, 0, 512, curbW);
@@ -509,12 +492,9 @@
 
     ctx.fillStyle = '#ffffff';
     for(let i=0; i<512; i+=64) {
-      ctx.fillRect(i, 0, 32, curbW);
-      ctx.fillRect(i, 512-curbW, 32, curbW);
-      ctx.fillRect(0, i, curbW, 32);
-      ctx.fillRect(512-curbW, i, curbW, 32);
+      ctx.fillRect(i, 0, 32, curbW); ctx.fillRect(i, 512-curbW, 32, curbW);
+      ctx.fillRect(0, i, curbW, 32); ctx.fillRect(512-curbW, i, curbW, 32);
     }
-
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(4, 4);
@@ -542,23 +522,12 @@
         const y = spacingY + r * (wHeight + spacingY);
 
         let light = Math.random();
-        if (light > 0.8) {
-          ctx.fillStyle = '#fef08a';
-          ctx.shadowBlur = 10; ctx.shadowColor = '#fef08a';
-        } else if (light > 0.6) {
-          ctx.fillStyle = '#bae6fd';
-          ctx.shadowBlur = 5; ctx.shadowColor = '#bae6fd';
-        } else {
-          ctx.fillStyle = '#020617';
-          ctx.shadowBlur = 0;
-        }
+        if (light > 0.8) { ctx.fillStyle = '#fef08a'; ctx.shadowBlur = 10; ctx.shadowColor = '#fef08a'; }
+        else if (light > 0.6) { ctx.fillStyle = '#bae6fd'; ctx.shadowBlur = 5; ctx.shadowColor = '#bae6fd'; }
+        else { ctx.fillStyle = '#020617'; ctx.shadowBlur = 0; }
 
-        if (type === 1) {
-          ctx.fillRect(0, y, 512, wHeight);
-          break;
-        } else {
-          ctx.fillRect(x, y, wWidth, wHeight);
-        }
+        if (type === 1) { ctx.fillRect(0, y, 512, wHeight); break; }
+        else { ctx.fillRect(x, y, wWidth, wHeight); }
       }
     }
     const tex = new THREE.CanvasTexture(canvas);
@@ -568,38 +537,26 @@
   }
 
   function initInfiniteCity() {
-    // 1. Road Ground Plane
     const roadTex = generateRoadTexture();
     const groundSize = BLOCK_SIZE * (INSTANCE_GRID_RADIUS * 2 + 4);
     const groundGeo = new THREE.PlaneGeometry(groundSize, groundSize);
-
     const repeatTimes = groundSize / BLOCK_SIZE;
     roadTex.repeat.set(repeatTimes, repeatTimes);
 
-    const groundMat = new THREE.MeshStandardMaterial({
-      map: roadTex, roughness: 0.8, metalness: 0.1
-    });
+    const groundMat = new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.8, metalness: 0.1 });
     groundPlane = new THREE.Mesh(groundGeo, groundMat);
     groundPlane.rotation.x = -Math.PI / 2;
     groundPlane.receiveShadow = true;
     scene.add(groundPlane);
 
-    // 2. Elevated Sidewalk Blocks (보도블럭 3D 매쉬)
     const sidewalkGeo = new THREE.BoxGeometry(BUILDING_SPACE, 0.4, BUILDING_SPACE);
-    sidewalkGeo.translate(0, 0.2, 0); // Origin at bottom base
-    const sidewalkMat = new THREE.MeshStandardMaterial({
-      map: generateSidewalkTexture(),
-      roughness: 0.7,
-      metalness: 0.1
-    });
+    sidewalkGeo.translate(0, 0.2, 0);
+    const sidewalkMat = new THREE.MeshStandardMaterial({ map: generateSidewalkTexture(), roughness: 0.7, metalness: 0.1 });
     sidewalkMesh = new THREE.InstancedMesh(sidewalkGeo, sidewalkMat, MAX_INSTANCES);
-    sidewalkMesh.receiveShadow = true;
-    sidewalkMesh.castShadow = true;
+    sidewalkMesh.receiveShadow = true; sidewalkMesh.castShadow = true;
     scene.add(sidewalkMesh);
 
-    // 3. Instanced Buildings
     const bGeo = new THREE.BoxGeometry(1, 1, 1);
-    // Origin at bottom center so height scaling goes upwards smoothly!
     bGeo.translate(0, 0.5, 0);
 
     const bMaterials = [
@@ -610,41 +567,169 @@
 
     for(let i=0; i<3; i++) {
       const iMesh = new THREE.InstancedMesh(bGeo, bMaterials[i], MAX_INSTANCES);
-      iMesh.castShadow = true;
-      iMesh.receiveShadow = true;
-      scene.add(iMesh);
-      bldgMeshes.push(iMesh);
+      iMesh.castShadow = true; iMesh.receiveShadow = true;
+      scene.add(iMesh); bldgMeshes.push(iMesh);
     }
   }
 
-  // Pre-allocate Skid Mark plane meshes for high performance
   function initSkidMarkPool() {
     const skidGeo = new THREE.PlaneGeometry(0.35, 1.2);
     skidGeo.rotateX(-Math.PI / 2);
-    const skidMat = new THREE.MeshBasicMaterial({
-      color: 0x111111,
-      transparent: true,
-      opacity: 0.7,
-      depthWrite: false
-    });
-
+    const skidMat = new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.7, depthWrite: false });
     for (let i = 0; i < MAX_SKID_MARKS; i++) {
       const mesh = new THREE.Mesh(skidGeo, skidMat.clone());
-      mesh.position.set(0, -999, 0);
-      mesh.visible = false;
-      scene.add(mesh);
-      skidMarkPool.push(mesh);
+      mesh.position.set(0, -999, 0); mesh.visible = false;
+      scene.add(mesh); skidMarkPool.push(mesh);
     }
   }
 
   function spawnSkidMark(x, z, angle, opacity = 0.7) {
     const mark = skidMarkPool[skidMarkIndex];
-    mark.position.set(x, 0.03, z); // Slightly above ground
+    mark.position.set(x, 0.03, z);
     mark.rotation.y = angle;
     mark.material.opacity = opacity;
     mark.visible = true;
-
     skidMarkIndex = (skidMarkIndex + 1) % MAX_SKID_MARKS;
+  }
+
+  // 새로운 NPC 트래픽 자동차 시스템
+  function initNPCCars() {
+    const colors = [0xffffff, 0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981, 0x8b5cf6];
+
+    for (let i = 0; i < MAX_NPC_CARS; i++) {
+      const group = new THREE.Group();
+
+      // 바디
+      const mat = new THREE.MeshStandardMaterial({ color: colors[i % colors.length], roughness: 0.5, metalness: 0.3 });
+      const bodyGeo = new THREE.BoxGeometry(1.9, 0.7, 4.0);
+      bodyGeo.translate(0, 0.55, 0);
+      const body = new THREE.Mesh(bodyGeo, mat);
+      body.castShadow = true;
+      group.add(body);
+
+      // 유리창 (캐빈)
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+      const cabinGeo = new THREE.BoxGeometry(1.6, 0.6, 2.0);
+      cabinGeo.translate(0, 1.2, -0.2);
+      const cabin = new THREE.Mesh(cabinGeo, glassMat);
+      group.add(cabin);
+
+      // 전조등 (밤에 빛나게)
+      const hlMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
+      const hl1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.1), hlMat);
+      hl1.position.set(0.6, 0.6, 2.05); group.add(hl1);
+      const hl2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.1), hlMat);
+      hl2.position.set(-0.6, 0.6, 2.05); group.add(hl2);
+
+      // 바퀴
+      const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
+      wheelGeo.rotateZ(Math.PI / 2);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+
+      const wPos = [[0.95, 0.35, 1.2], [-0.95, 0.35, 1.2], [0.95, 0.35, -1.2], [-0.95, 0.35, -1.2]];
+      wPos.forEach(pos => {
+        const w = new THREE.Mesh(wheelGeo, wheelMat);
+        w.position.set(...pos);
+        group.add(w);
+      });
+
+      scene.add(group);
+
+      npcCars.push({
+        mesh: group,
+        lights: [hl1, hl2],
+        x: 0, z: 0, angle: 0,
+        speed: 30 + Math.random() * 20, // 랜덤한 속도 (30 ~ 50km/h)
+        active: false,
+        headlightsOn: false,
+        isVertical: true, // X축 이동인지 Z축 이동인지 추적
+        laneOffset: 0
+      });
+    }
+  }
+
+  function updateNPCCars() {
+    if (!State.isPlaying) return;
+    const moveDist = 0.016; // 대략적인 60fps 시간 델타
+    const isNight = (State.envMode === 'night' || State.envMode === 'sunset');
+    
+    // 차선 오프셋 계산 (도로의 정중앙 0기준으로 우측/좌측 차선)
+    // 도로 폭(ROAD_WIDTH)이 32이므로 중앙에서 양쪽으로 약 8만큼 떨어지게 설정
+    const rightLaneOffset = ROAD_WIDTH * 0.25; 
+    const leftLaneOffset = -ROAD_WIDTH * 0.25;
+
+    npcCars.forEach(npc => {
+      // NPC 재생성 로직 (너무 멀어지거나 아직 활성화 안된 경우)
+      if (!npc.active) {
+        // 플레이어 주변 무작위 블록으로 스폰 위치 결정
+        const bx = Math.floor(State.posX / BLOCK_SIZE) + (Math.floor(Math.random() * 5) - 2);
+        const bz = Math.floor(State.posZ / BLOCK_SIZE) + (Math.floor(Math.random() * 5) - 2);
+
+        npc.isVertical = Math.random() > 0.5;
+        const isRightLane = Math.random() > 0.5;
+        npc.laneOffset = isRightLane ? rightLaneOffset : leftLaneOffset;
+        
+        // 도로의 위치는 블록의 경계선(0, BLOCK_SIZE, 2*BLOCK_SIZE ...)에 위치함
+        // 따라서 도로 중심선 좌표는 bx * BLOCK_SIZE 가 됨.
+        
+        if (npc.isVertical) {
+          // Z축으로 길게 뻗은 세로 방향 도로 (X좌표가 고정)
+          // X좌표: 해당 블록의 도로 중심선(bx * BLOCK_SIZE) + 차선 오프셋
+          npc.x = bx * BLOCK_SIZE + npc.laneOffset;
+          
+          // Z좌표: 플레이어 기준 해당 블록 어딘가 무작위
+          npc.z = bz * BLOCK_SIZE + (Math.random() * BLOCK_SIZE - BLOCK_SIZE/2);
+          
+          // 방향: 우측 통행(양수 오프셋)이면 -Z방향, 좌측 통행(음수 오프셋)이면 +Z방향으로 직진하도록 각도 설정
+          npc.angle = isRightLane ? Math.PI : 0; 
+        } else {
+          // X축으로 길게 뻗은 가로 방향 도로 (Z좌표가 고정)
+          // Z좌표: 해당 블록의 도로 중심선(bz * BLOCK_SIZE) + 차선 오프셋 (차선은 이제 도로의 상하)
+          npc.z = bz * BLOCK_SIZE + npc.laneOffset;
+          
+          // X좌표: 해당 블록 어딘가 무작위
+          npc.x = bx * BLOCK_SIZE + (Math.random() * BLOCK_SIZE - BLOCK_SIZE/2);
+          
+          // 방향: 우측 통행(아래쪽 차선)이면 -X방향, 좌측 통행(위쪽 차선)이면 +X방향
+          // 우측 차선(Z값이 양수 오프셋)일때 각도 -PI/2 (우측), 좌측 차선일때 PI/2 (좌측)
+          npc.angle = isRightLane ? -Math.PI / 2 : Math.PI / 2;
+        }
+
+        npc.active = true;
+      }
+
+      // NPC 이동 계산 (항상 자기 방향으로 직진)
+      npc.x += Math.sin(npc.angle) * (npc.speed * moveDist);
+      npc.z += Math.cos(npc.angle) * (npc.speed * moveDist);
+
+      // NPC가 블록 중심(교차로)을 지날 때 무작위로 회전 결정 (차선 유지)
+      // 단순화를 위해 무조건 직진만 하도록 수정하여 차선을 절대 벗어나지 않게 함.
+
+      // 거리 체크 (플레이어와 너무 멀어지면 비활성화하여 재생성 유도)
+      const dx = npc.x - State.posX;
+      const dz = npc.z - State.posZ;
+      if (dx*dx + dz*dz > (BLOCK_SIZE * 3.5) * (BLOCK_SIZE * 3.5)) {
+        npc.active = false;
+        npc.mesh.position.y = -999; // 화면에서 숨김
+      } else {
+        npc.mesh.position.set(npc.x, 0.3, npc.z); // 바닥에서 살짝 띄움
+        npc.mesh.rotation.y = npc.angle;
+
+        // 전조등 야간 자동 On/Off
+        if (isNight !== npc.headlightsOn) {
+          npc.headlightsOn = isNight;
+          const lightColor = isNight ? 0xffffee : 0x555555;
+          npc.lights.forEach(l => l.material.color.setHex(lightColor));
+        }
+
+        // 플레이어와의 충돌 판정 (단순 반경 체크)
+        if (dx*dx + dz*dz < 20) { // 약 4.5미터 거리 내 충돌
+          State.speed = -State.speed * 0.4; // 플레이어 튕겨남
+          State.posX -= Math.sin(State.angle) * 1.5;
+          State.posZ -= Math.cos(State.angle) * 1.5;
+        }
+      }
+    });
   }
 
   function buildHighPolyCar(type) {
@@ -654,146 +739,80 @@
     wheels = []; headlightLights = []; tailLights = [];
     const config = CarConfigs[type];
 
-    const bodyMat = new THREE.MeshPhysicalMaterial({
-      color: config.color,
-      metalness: 0.6,
-      roughness: 0.2,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05
-    });
-
+    const bodyMat = new THREE.MeshPhysicalMaterial({ color: config.color, metalness: 0.6, roughness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.05 });
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-    const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x050505, metalness: 0.9, roughness: 0.1, transmission: 0.8, transparent: true
-    });
+    const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x050505, metalness: 0.9, roughness: 0.1, transmission: 0.8, transparent: true });
 
     const shape = new THREE.Shape();
-    shape.moveTo(-2.2, 0.2);
-    shape.lineTo(-2.2, 0.65);
-    shape.lineTo(-1.8, 0.85);
-    shape.bezierCurveTo(-1.0, 0.9, -0.6, 1.2, -0.2, 1.25);
-    shape.lineTo(0.6, 1.25);
-    shape.bezierCurveTo(1.2, 1.2, 1.4, 0.8, 1.8, 0.75);
-    shape.lineTo(2.4, 0.65);
-    shape.bezierCurveTo(2.6, 0.5, 2.6, 0.3, 2.5, 0.2);
-    shape.lineTo(-2.2, 0.2);
+    shape.moveTo(-2.2, 0.2); shape.lineTo(-2.2, 0.65); shape.lineTo(-1.8, 0.85);
+    shape.bezierCurveTo(-1.0, 0.9, -0.6, 1.2, -0.2, 1.25); shape.lineTo(0.6, 1.25);
+    shape.bezierCurveTo(1.2, 1.2, 1.4, 0.8, 1.8, 0.75); shape.lineTo(2.4, 0.65);
+    shape.bezierCurveTo(2.6, 0.5, 2.6, 0.3, 2.5, 0.2); shape.lineTo(-2.2, 0.2);
 
     const extrudeSettings = { depth: 1.8, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.08, bevelThickness: 0.08 };
     const bodyGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-
-    bodyGeo.center();
-    bodyGeo.rotateY(Math.PI / 2);
+    bodyGeo.center(); bodyGeo.rotateY(Math.PI / 2);
 
     carBodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-    carBodyMesh.position.y = 0.6;
-    carBodyMesh.castShadow = true;
+    carBodyMesh.position.y = 0.6; carBodyMesh.castShadow = true;
     carGroup.add(carBodyMesh);
 
-    // Glass
     const glassShape = new THREE.Shape();
-    glassShape.moveTo(-1.6, 0.86);
-    glassShape.lineTo(-0.2, 1.26);
-    glassShape.lineTo(0.6, 1.26);
-    glassShape.lineTo(1.6, 0.76);
-    glassShape.lineTo(0.6, 0.8);
-    glassShape.lineTo(-0.2, 0.8);
-    glassShape.lineTo(-1.6, 0.86);
-
-    const glassExtrude = { depth: 1.82, bevelEnabled: false };
-    const glassGeo = new THREE.ExtrudeGeometry(glassShape, glassExtrude);
+    glassShape.moveTo(-1.6, 0.86); glassShape.lineTo(-0.2, 1.26); glassShape.lineTo(0.6, 1.26);
+    glassShape.lineTo(1.6, 0.76); glassShape.lineTo(0.6, 0.8); glassShape.lineTo(-0.2, 0.8); glassShape.lineTo(-1.6, 0.86);
+    const glassGeo = new THREE.ExtrudeGeometry(glassShape, { depth: 1.82, bevelEnabled: false });
     glassGeo.center(); glassGeo.rotateY(Math.PI / 2);
     const glassMesh = new THREE.Mesh(glassGeo, glassMat);
-    glassMesh.position.y = 0.61;
-    carGroup.add(glassMesh);
+    glassMesh.position.y = 0.61; carGroup.add(glassMesh);
 
-    // Front Grill
-    const grillGeo = new THREE.BoxGeometry(1.6, 0.2, 0.1);
-    const grill = new THREE.Mesh(grillGeo, blackMat);
-    grill.position.set(0, 0.35, 2.45);
-    carGroup.add(grill);
+    const grill = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.2, 0.1), blackMat);
+    grill.position.set(0, 0.35, 2.45); carGroup.add(grill);
 
-    // Spoiler
     if (type === 'gt' || type === 'cyber') {
-      const spoilerWingGeo = new THREE.BoxGeometry(1.9, 0.05, 0.4);
-      const spoilerWing = new THREE.Mesh(spoilerWingGeo, blackMat);
-      spoilerWing.position.set(0, 1.05, -2.1);
-      spoilerWing.rotation.x = -0.1;
+      const spoilerWing = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.4), blackMat);
+      spoilerWing.position.set(0, 1.05, -2.1); spoilerWing.rotation.x = -0.1;
       carGroup.add(spoilerWing);
-
-      const strutGeo = new THREE.BoxGeometry(0.05, 0.25, 0.2);
-      const strutL = new THREE.Mesh(strutGeo, blackMat);
+      const strutL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.25, 0.2), blackMat);
       strutL.position.set(0.6, 0.9, -2.0);
-      const strutR = strutL.clone();
-      strutR.position.x = -0.6;
+      const strutR = strutL.clone(); strutR.position.x = -0.6;
       carGroup.add(strutL); carGroup.add(strutR);
     }
 
-    // Wheels
-    const tireGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.35, 32);
-    tireGeo.rotateZ(Math.PI / 2);
-    const rimGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.37, 16);
-    rimGeo.rotateZ(Math.PI / 2);
+    const tireGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.35, 32); tireGeo.rotateZ(Math.PI / 2);
+    const rimGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.37, 16); rimGeo.rotateZ(Math.PI / 2);
     const rimMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1.0, roughness: 0.2 });
 
-    const wheelPos = [
-      { x: 0.95, y: 0.38, z: 1.5 },   // Front Left
-      { x: -0.95, y: 0.38, z: 1.5 },  // Front Right
-      { x: 0.95, y: 0.38, z: -1.5 },  // Rear Left
-      { x: -0.95, y: 0.38, z: -1.5 }  // Rear Right
-    ];
-
+    const wheelPos = [{ x: 0.95, y: 0.38, z: 1.5 }, { x: -0.95, y: 0.38, z: 1.5 }, { x: 0.95, y: 0.38, z: -1.5 }, { x: -0.95, y: 0.38, z: -1.5 }];
     wheelPos.forEach((p, index) => {
       const wGroup = new THREE.Group();
-      const tire = new THREE.Mesh(tireGeo, blackMat);
-      const rim = new THREE.Mesh(rimGeo, rimMat);
-
+      const tire = new THREE.Mesh(tireGeo, blackMat); const rim = new THREE.Mesh(rimGeo, rimMat);
       for(let s=0; s<5; s++) {
         const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.45, 0.36), rimMat);
-        spoke.rotation.x = (Math.PI / 5) * s;
-        wGroup.add(spoke);
+        spoke.rotation.x = (Math.PI / 5) * s; wGroup.add(spoke);
       }
-
       wGroup.add(tire); wGroup.add(rim);
       wGroup.position.set(p.x, p.y, p.z);
       wGroup.children.forEach(c => c.castShadow = true);
-
       carGroup.add(wGroup);
       wheels.push({ mesh: wGroup, isFront: index < 2, relX: p.x, relZ: p.z });
     });
 
-    // Lights
     const hlMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const hlGeo = new THREE.BoxGeometry(0.4, 0.1, 0.1);
-
     const tlMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const tlGeo = new THREE.BoxGeometry(0.5, 0.1, 0.1);
-
     for (let i = -1; i <= 1; i += 2) {
-      const hl = new THREE.Mesh(hlGeo, hlMat);
-      hl.position.set(i * 0.6, 0.65, 2.45);
-      hl.rotation.z = i * -0.1;
-      carGroup.add(hl);
-
+      const hl = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.1), hlMat);
+      hl.position.set(i * 0.6, 0.65, 2.45); hl.rotation.z = i * -0.1; carGroup.add(hl);
       const spot = new THREE.SpotLight(0xffffff, 0, 150, Math.PI / 5, 0.6, 1);
-      spot.position.set(i * 0.6, 0.65, 2.5);
-      spot.target.position.set(i * 0.6, 0, 30);
-      carGroup.add(spot);
-      carGroup.add(spot.target);
-      headlightLights.push(spot);
+      spot.position.set(i * 0.6, 0.65, 2.5); spot.target.position.set(i * 0.6, 0, 30);
+      carGroup.add(spot); carGroup.add(spot.target); headlightLights.push(spot);
 
-      const tl = new THREE.Mesh(tlGeo, tlMat);
-      tl.position.set(i * 0.7, 0.75, -2.25);
-      carGroup.add(tl);
-
+      const tl = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.1), tlMat);
+      tl.position.set(i * 0.7, 0.75, -2.25); carGroup.add(tl);
       const redGlow = new THREE.PointLight(0xff0000, 0, 5);
-      redGlow.position.set(i * 0.7, 0.75, -2.4);
-      carGroup.add(redGlow);
-      tailLights.push(redGlow);
+      redGlow.position.set(i * 0.7, 0.75, -2.4); carGroup.add(redGlow); tailLights.push(redGlow);
     }
-
     underglowLight = new THREE.PointLight(config.color, 0, 12);
-    underglowLight.position.set(0, 0.1, 0);
-    carGroup.add(underglowLight);
+    underglowLight.position.set(0, 0.1, 0); carGroup.add(underglowLight);
 
     scene.add(carGroup);
     updateEnvironmentLighting();
@@ -802,8 +821,7 @@
   function setupUIAndEvents() {
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
     window.addEventListener('keydown', (e) => {
@@ -832,8 +850,7 @@
     });
 
     document.getElementById('btn-start-game').addEventListener('click', () => {
-      audioSys.init();
-      State.isPlaying = true;
+      audioSys.init(); State.isPlaying = true;
       document.getElementById('menu-overlay').style.opacity = '0';
       document.getElementById('ui-container').classList.remove('hidden');
       setTimeout(() => document.getElementById('menu-overlay').style.display = 'none', 500);
@@ -842,16 +859,12 @@
     document.querySelectorAll('.car-select-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.car-select-btn').forEach(b => {
-          b.classList.remove('border-sky-400', 'bg-sky-500/10');
-          b.classList.add('border-transparent');
-          b.querySelector('.font-orbitron').classList.remove('text-sky-300', 'text-white');
-          b.querySelector('.font-orbitron').classList.add('text-slate-300');
+          b.classList.remove('border-sky-400', 'bg-sky-500/10'); b.classList.add('border-transparent');
+          b.querySelector('.font-orbitron').classList.remove('text-sky-300', 'text-white'); b.querySelector('.font-orbitron').classList.add('text-slate-300');
         });
         const target = e.currentTarget;
-        target.classList.remove('border-transparent');
-        target.classList.add('border-sky-400', 'bg-sky-500/10');
+        target.classList.remove('border-transparent'); target.classList.add('border-sky-400', 'bg-sky-500/10');
         target.querySelector('.font-orbitron').classList.add('text-sky-300');
-
         State.selectedCar = target.dataset.car;
         buildHighPolyCar(State.selectedCar);
       });
@@ -865,17 +878,14 @@
     });
     document.getElementById('btn-camera').addEventListener('click', toggleCamera);
 
-    setupTouchBtn('touch-accel', 'forward');
-    setupTouchBtn('touch-brake', 'backward');
-    setupTouchBtn('touch-left', 'left');
-    setupTouchBtn('touch-right', 'right');
-  }
-
-  function setupTouchBtn(id, key) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); Input[key] = true; });
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); Input[key] = false; });
+    ['forward','backward','left','right'].forEach((key, idx) => {
+      const ids = ['touch-accel', 'touch-brake', 'touch-left', 'touch-right'];
+      const btn = document.getElementById(ids[idx]);
+      if (btn) {
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); Input[key] = true; });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); Input[key] = false; });
+      }
+    });
   }
 
   function toggleEnvironment() {
@@ -893,23 +903,17 @@
     const sun = scene.getObjectByName('sunLight');
 
     if (State.envMode === 'day') {
-      scene.background.setHex(0x87ceeb);
-      scene.fog.color.setHex(0x87ceeb);
-      scene.fog.density = 0.002;
+      scene.background.setHex(0x87ceeb); scene.fog.color.setHex(0x87ceeb); scene.fog.density = 0.002;
       if (ambient) ambient.intensity = 0.6;
       if (sun) { sun.intensity = 1.5; sun.color.setHex(0xfffbeb); }
       State.headlightsOn = false;
     } else if (State.envMode === 'sunset') {
-      scene.background.setHex(0xf97316);
-      scene.fog.color.setHex(0xf97316);
-      scene.fog.density = 0.0025;
+      scene.background.setHex(0xf97316); scene.fog.color.setHex(0xf97316); scene.fog.density = 0.0025;
       if (ambient) ambient.intensity = 0.3;
       if (sun) { sun.intensity = 0.8; sun.color.setHex(0xfdba74); }
       State.headlightsOn = true;
     } else {
-      scene.background.setHex(0x020617);
-      scene.fog.color.setHex(0x020617);
-      scene.fog.density = 0.0035;
+      scene.background.setHex(0x020617); scene.fog.color.setHex(0x020617); scene.fog.density = 0.0035;
       if (ambient) ambient.intensity = 0.1;
       if (sun) { sun.intensity = 0.05; sun.color.setHex(0x38bdf8); }
       State.headlightsOn = true;
@@ -926,58 +930,132 @@
     tailLights.forEach(l => l.intensity = State.headlightsOn ? 1.0 : 0);
   }
 
-  function toggleCamera() {
-    State.cameraMode = (State.cameraMode + 1) % 3;
-  }
+  function toggleCamera() { State.cameraMode = (State.cameraMode + 1) % 3; }
 
   function resetCarPosition() {
-    State.posX = Math.floor(State.posX / BLOCK_SIZE) * BLOCK_SIZE;
-    State.posZ = Math.floor(State.posZ / BLOCK_SIZE) * BLOCK_SIZE;
-    State.angle = 0; State.speed = 0;
+    State.posX = Math.floor(State.posX / BLOCK_SIZE) * BLOCK_SIZE + BLOCK_SIZE/2; // Center of block
+    State.posZ = Math.floor(State.posZ / BLOCK_SIZE) * BLOCK_SIZE + BLOCK_SIZE/2;
+    State.angle = 0; State.speed = 0; State.posY = 0;
     showToast("REPOSITIONED", "안전한 도로 중앙으로 복귀했습니다.");
   }
 
   function showToast(title, sub) {
     const toast = document.getElementById('toast');
-    document.getElementById('toast-title').innerText = title;
-    document.getElementById('toast-sub').innerText = sub;
-    toast.style.opacity = '1';
-    toast.style.transform = 'translate(-50%, -50%) scale(1)';
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
-    }, 2000);
+    document.getElementById('toast-title').innerText = title; document.getElementById('toast-sub').innerText = sub;
+    toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, -50%) scale(1)';
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -50%) scale(0.9)'; }, 2000);
+  }
+
+  function initMinimap() {
+    const canvas = document.getElementById('minimap');
+    canvas.width = canvas.clientWidth || 100; canvas.height = canvas.clientHeight || 100;
+    minimapCtx = canvas.getContext('2d');
+  }
+
+  // 완벽히 수정된 미니맵 렌더링 함수
+  function drawMinimap() {
+    if (!minimapCtx || !State.isPlaying) return;
+    const canvas = document.getElementById('minimap');
+    if (canvas.width !== canvas.clientWidth) {
+      canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
+    }
+
+    const ctx = minimapCtx;
+    const w = canvas.width; const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, w, h);
+
+    const scale = 0.15;
+    const cx = w / 2, cy = h / 2;
+
+    const curBx = Math.floor(State.posX / BLOCK_SIZE);
+    const curBz = Math.floor(State.posZ / BLOCK_SIZE);
+
+    // 맵 내의 건물(블록) 그리기
+    ctx.fillStyle = '#475569';
+    for(let dx = -3; dx <= 3; dx++) {
+      for(let dz = -3; dz <= 3; dz++) {
+        const bx = curBx + dx;
+        const bz = curBz + dz;
+        if (seededRandom(bx, bz) > 0.22) {
+          const blockCenterX = bx * BLOCK_SIZE + BLOCK_SIZE/2;
+          const blockCenterZ = bz * BLOCK_SIZE + BLOCK_SIZE/2;
+
+          // Three.js 좌표계를 미니맵(2D Canvas) 좌표계로 변환
+          // Three.js: +X는 오른쪽, +Z는 앞쪽(화면 아래로)
+          // Canvas: +X는 오른쪽, +Y는 아래쪽
+          const mx = cx + (blockCenterX - State.posX) * scale;
+          const my = cy + (blockCenterZ - State.posZ) * scale;
+
+          const bw = BUILDING_SPACE * scale * 0.8;
+          ctx.fillRect(mx - bw/2, my - bw/2, bw, bw);
+        }
+      }
+    }
+
+    // 플레이어의 아이콘 (수학적 오류 수정됨)
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Three.js에서 Angle 0은 +Z 방향 (Canvas 상에서는 아래쪽).
+    // 우리가 원하는 것은 차가 전진하는 방향이 직관적으로 그려지는 것.
+    // Three.js 에서는 Angle이 양수면 왼쪽으로 돈다 (반시계).
+    // Math.sin(angle), Math.cos(angle)을 이용하여 이동하므로:
+    // angle = 0 일때, x += 0, z += speed => 아래로 이동
+    // angle = PI/2 일때, x += speed, z += 0 => 오른쪽으로 이동
+    // 캔버스 회전은 양수가 시계방향이므로, -angle로 회전시킵니다.
+    // 단, 기준 각도(0도 일때 아래를 향함)를 보정하기 위해 추가로 회전이 필요할 수 있습니다.
+    // 기존에 -angle 이었으나, 직관성을 위해 방향 벡터를 계산하여 atan2를 쓰는 것이 가장 정확합니다.
+
+    const moveX = Math.sin(State.angle);
+    const moveZ = Math.cos(State.angle);
+    // Canvas에서 Y축은 Three.js의 Z축과 같습니다.
+    // atan2(y, x) -> 여기서 y는 moveZ, x는 moveX
+    const drawAngle = Math.atan2(moveZ, moveX);
+
+    // 미니맵에서 직관적으로 "전진"하는 방향이 뾰족한 쪽이 되도록
+    // 삼각함수의 0도 기준은 우측(3시) 이므로, 거기에 맞춰서 삼각형을 그립니다.
+    ctx.rotate(drawAngle);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = '#38bdf8';
+    
+    // 우측(3시 방향)을 향하는 뾰족한 삼각형
+    ctx.beginPath();
+    ctx.moveTo(6, 0);  // 뾰족한 앞부분 (Right)
+    ctx.lineTo(-4, 4); // 좌측 뒤
+    ctx.lineTo(-2, 0); // 오목한 뒷부분
+    ctx.lineTo(-4, -4);// 우측 뒤
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
   }
 
   function updateInfiniteWorld(carX, carZ) {
-    const curBx = Math.floor(carX / BLOCK_SIZE);
-    const curBz = Math.floor(carZ / BLOCK_SIZE);
-
+    const curBx = Math.floor(carX / BLOCK_SIZE); const curBz = Math.floor(carZ / BLOCK_SIZE);
     groundPlane.position.x = curBx * BLOCK_SIZE + BLOCK_SIZE/2;
     groundPlane.position.z = curBz * BLOCK_SIZE + BLOCK_SIZE/2;
 
     if (curBx !== lastBlockX || curBz !== lastBlockZ) {
       lastBlockX = curBx; lastBlockZ = curBz;
-
       const dummy = new THREE.Object3D();
-      let counts = [0, 0, 0];
-      let sidewalkCount = 0;
+      let counts = [0, 0, 0], sidewalkCount = 0;
       activeColliders = [];
+      sidewalkAreas = []; // Clear and rebuild sidewalk areas
 
       for (let dx = -INSTANCE_GRID_RADIUS; dx <= INSTANCE_GRID_RADIUS; dx++) {
         for (let dz = -INSTANCE_GRID_RADIUS; dz <= INSTANCE_GRID_RADIUS; dz++) {
-          const bx = curBx + dx;
-          const bz = curBz + dz;
-
+          const bx = curBx + dx; const bz = curBz + dz;
           const hashVal = seededRandom(bx, bz);
-          const posX = bx * BLOCK_SIZE + BLOCK_SIZE/2;
-          const posZ = bz * BLOCK_SIZE + BLOCK_SIZE/2;
+          const posX = bx * BLOCK_SIZE + BLOCK_SIZE/2; const posZ = bz * BLOCK_SIZE + BLOCK_SIZE/2;
 
-          // Always draw elevated Sidewalk block (보도블럭 단)
-          dummy.position.set(posX, 0, posZ);
-          dummy.scale.set(1, 1, 1);
-          dummy.updateMatrix();
+          dummy.position.set(posX, 0, posZ); dummy.scale.set(1, 1, 1); dummy.updateMatrix();
           sidewalkMesh.setMatrixAt(sidewalkCount++, dummy.matrix);
+
+          // Add sidewalk area to track for bumping
+          sidewalkAreas.push({ x: posX, z: posZ, halfW: BUILDING_SPACE / 2, halfD: BUILDING_SPACE / 2 });
 
           if (hashVal > 0.22) {
             const typeIndex = Math.floor((hashVal * 100) % 3);
@@ -988,132 +1066,64 @@
               const widthX = BUILDING_SPACE * (0.65 + hashVal * 0.3);
               const widthZ = BUILDING_SPACE * (0.65 + seededRandom(bz, bx) * 0.3);
 
-              // FIX: Building base sits firmly on the top of sidewalk! (Y = 0.4)
               dummy.position.set(posX, 0.4, posZ);
-              dummy.scale.set(widthX, height, widthZ);
-              dummy.updateMatrix();
-
+              dummy.scale.set(widthX, height, widthZ); dummy.updateMatrix();
               bldgMeshes[typeIndex].setMatrixAt(meshIndex, dummy.matrix);
               counts[typeIndex]++;
 
               if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) {
-                activeColliders.push({
-                  x: posX, z: posZ,
-                  halfW: widthX / 2, halfD: widthZ / 2
-                });
+                activeColliders.push({ x: posX, z: posZ, halfW: widthX / 2, halfD: widthZ / 2 });
               }
             }
           }
         }
       }
 
-      // Hide remaining instances
-      dummy.scale.set(0,0,0);
-      dummy.updateMatrix();
-
-      for(let j = sidewalkCount; j < MAX_INSTANCES; j++) {
-        sidewalkMesh.setMatrixAt(j, dummy.matrix);
-      }
+      dummy.scale.set(0,0,0); dummy.updateMatrix();
+      for(let j = sidewalkCount; j < MAX_INSTANCES; j++) sidewalkMesh.setMatrixAt(j, dummy.matrix);
       sidewalkMesh.instanceMatrix.needsUpdate = true;
-
       for(let i=0; i<3; i++) {
-        for(let j = counts[i]; j < MAX_INSTANCES; j++) {
-          bldgMeshes[i].setMatrixAt(j, dummy.matrix);
-        }
+        for(let j = counts[i]; j < MAX_INSTANCES; j++) bldgMeshes[i].setMatrixAt(j, dummy.matrix);
         bldgMeshes[i].instanceMatrix.needsUpdate = true;
       }
     }
   }
 
-  function initMinimap() {
-    const canvas = document.getElementById('minimap');
-    canvas.width = canvas.clientWidth || 100;
-    canvas.height = canvas.clientHeight || 100;
-    minimapCtx = canvas.getContext('2d');
-  }
+  function updatePhysics() {
+    if (!State.isPlaying) return;
+    const config = CarConfigs[State.selectedCar];
 
-  function drawMinimap() {
-    if (!minimapCtx || !State.isPlaying) return;
-    const canvas = document.getElementById('minimap');
-    if (canvas.width !== canvas.clientWidth) {
-      canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
-    }
-
-    const ctx = minimapCtx;
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, h);
-
-    const scale = 0.15;
-    const cx = w / 2, cy = h / 2;
-
-    const curBx = Math.floor(State.posX / BLOCK_SIZE);
-    const curBz = Math.floor(State.posZ / BLOCK_SIZE);
-
-    ctx.fillStyle = '#475569';
-    for(let dx = -3; dx <= 3; dx++) {
-      for(let dz = -3; dz <= 3; dz++) {
-        const bx = curBx + dx;
-        const bz = curBz + dz;
-        if (seededRandom(bx, bz) > 0.22) {
-          const blockCenterX = bx * BLOCK_SIZE + BLOCK_SIZE/2;
-          const blockCenterZ = bz * BLOCK_SIZE + BLOCK_SIZE/2;
-
-          const mx = cx + (blockCenterX - State.posX) * scale;
-          const my = cy + (blockCenterZ - State.posZ) * scale;
-
-          const bw = BUILDING_SPACE * scale * 0.8;
-          ctx.fillRect(mx - bw/2, my - bw/2, bw, bw);
-        }
+    // Check if on sidewalk (보도블럭 위 확인)
+    let onSidewalk = false;
+    for (let sa of sidewalkAreas) {
+      if (Math.abs(State.posX - sa.x) < sa.halfW && Math.abs(State.posZ - sa.z) < sa.halfD) {
+        onSidewalk = true;
+        break;
       }
     }
 
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(-State.angle);
-    ctx.fillStyle = '#38bdf8';
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = '#38bdf8';
-    ctx.beginPath();
-    ctx.moveTo(0, -6);
-    ctx.lineTo(5, 5);
-    ctx.lineTo(0, 2);
-    ctx.lineTo(-5, 5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function updatePhysics() {
-    if (!State.isPlaying) return;
-
-    const config = CarConfigs[State.selectedCar];
+    // 보도블럭 위면 속도 감소율 증가 및 Z좌표(여기선 Y축) 약간 상승
+    const friction = onSidewalk ? 0.95 : 0.985;
+    const targetY = onSidewalk ? 0.2 : 0.0;
+    // 부드러운 Y축 상승 효과
+    State.posY += (targetY - State.posY) * 0.2;
 
     let currentAccel = config.accel;
-    if (Input.nitro && State.nitro > 2) {
-      currentAccel *= 1.65;
-      State.nitro -= 0.6;
-      State.isBoosting = true;
+    // 보도블럭 위에서는 가속도도 약간 감소
+    if (onSidewalk) currentAccel *= 0.8;
+
+    if (Input.nitro && State.nitro > 2 && !onSidewalk) { // 보도블럭 위에서는 니트로 불가
+      currentAccel *= 1.65; State.nitro -= 0.6; State.isBoosting = true;
       camera.fov = THREE.MathUtils.lerp(camera.fov, 78, 0.1);
     } else {
-      State.nitro = Math.min(100, State.nitro + 0.12);
-      State.isBoosting = false;
+      State.nitro = Math.min(100, State.nitro + 0.12); State.isBoosting = false;
       camera.fov = THREE.MathUtils.lerp(camera.fov, 60, 0.1);
     }
     camera.updateProjectionMatrix();
 
-    if (Input.forward) {
-      State.speed += currentAccel;
-      State.gear = 'D';
-    } else if (Input.backward) {
-      State.speed -= currentAccel * 0.8;
-      if (State.speed < 0) State.gear = 'R';
-    } else {
-      State.speed *= 0.985;
-    }
+    if (Input.forward) { State.speed += currentAccel; State.gear = 'D'; }
+    else if (Input.backward) { State.speed -= currentAccel * 0.8; if (State.speed < 0) State.gear = 'R'; }
+    else { State.speed *= friction; } // 도로에 따른 마찰력 적용
 
     const maxSpd = State.isBoosting ? config.maxSpeed * 1.35 : config.maxSpeed;
     State.speed = Math.max(-config.maxSpeed * 0.3, Math.min(maxSpd, State.speed));
@@ -1123,87 +1133,70 @@
     else if (Input.right) State.steering = Math.max(-0.65, State.steering - steerSensitivity);
     else State.steering *= 0.78;
 
-    // Enhanced Drift Mechanics
     if (Input.drift && Math.abs(State.speed) > 30) {
-      State.speed *= config.brake;
-      State.isDrifting = true;
-
-      // Increased turning yaw while drifting for intense slide feel
+      State.speed *= config.brake; State.isDrifting = true;
       State.angle += State.steering * 0.085;
-
       const pts = Math.floor(Math.abs(State.speed * State.steering) * 0.9);
-      State.driftScore += pts;
-      State.totalDriftScore += pts;
+      State.driftScore += pts; State.totalDriftScore += pts;
 
-      // Spawn Skid Marks from both rear wheels
       if (wheels.length >= 4) {
-        const sin = Math.sin(State.angle);
-        const cos = Math.cos(State.angle);
-
+        const sin = Math.sin(State.angle), cos = Math.cos(State.angle);
         wheels.slice(2).forEach(w => {
-          // Calculate exact world coordinate of tire
           const wx = State.posX + (w.relX * cos + w.relZ * sin);
           const wz = State.posZ + (-w.relX * sin + w.relZ * cos);
           spawnSkidMark(wx, wz, State.angle, Math.min(1.0, Math.abs(State.speed) / 100));
         });
       }
-
     } else {
       State.isDrifting = false;
       State.angle += State.steering * (State.speed / 1000);
     }
 
-    // Predictive Movement & Collision Box
     const moveDist = State.speed * 0.016;
     let nextX = State.posX + Math.sin(State.angle) * moveDist;
     let nextZ = State.posZ + Math.cos(State.angle) * moveDist;
+    let collided = false; const carRadius = 2.5;
 
-    const carRadius = 2.5;
-    let collided = false;
-
+    // 건물과 충돌 처리
     for (let b of activeColliders) {
-      if (Math.abs(nextX - b.x) < (b.halfW + carRadius) &&
-              Math.abs(nextZ - b.z) < (b.halfD + carRadius)) {
-        collided = true;
-        break;
+      if (Math.abs(nextX - b.x) < (b.halfW + carRadius) && Math.abs(nextZ - b.z) < (b.halfD + carRadius)) {
+        collided = true; break;
       }
     }
 
     if (collided) {
       State.speed = -State.speed * 0.35;
-      State.posX -= Math.sin(State.angle) * 1.2;
-      State.posZ -= Math.cos(State.angle) * 1.2;
+      State.posX -= Math.sin(State.angle) * 1.2; State.posZ -= Math.cos(State.angle) * 1.2;
     } else {
-      State.posX = nextX;
-      State.posZ = nextZ;
+      State.posX = nextX; State.posZ = nextZ;
     }
 
-    // Body Tilt (Roll) when turning/drifting
     if (carGroup) {
-      carGroup.position.set(State.posX, 0, State.posZ);
+      // Y축 상승 효과 적용
+      carGroup.position.set(State.posX, State.posY, State.posZ);
       carGroup.rotation.y = State.angle;
-
-      if (carBodyMesh) {
-        const targetRoll = -State.steering * (State.speed / 180);
-        carBodyMesh.rotation.z = THREE.MathUtils.lerp(carBodyMesh.rotation.z, targetRoll, 0.15);
+      
+      // 보도블럭 위에서는 차체가 덜컹거리는 효과 추가
+      if (onSidewalk && Math.abs(State.speed) > 10) {
+        carGroup.rotation.x = Math.sin(Date.now() * 0.05) * 0.01;
+        carGroup.rotation.z = Math.cos(Date.now() * 0.05) * 0.01;
+      } else {
+        carGroup.rotation.x = 0;
+        if (carBodyMesh) carBodyMesh.rotation.z = THREE.MathUtils.lerp(carBodyMesh.rotation.z, -State.steering * (State.speed / 180), 0.15);
       }
 
       const isBraking = Input.backward || Input.drift;
       tailLights.forEach(l => l.intensity = isBraking ? 4.0 : (State.headlightsOn ? 1.0 : 0));
-
-      wheels.forEach((w) => {
-        w.mesh.children[0].rotation.x += moveDist * 0.8;
-        w.mesh.children[1].rotation.x += moveDist * 0.8;
-
-        if (w.isFront) {
-          w.mesh.rotation.y = State.steering * 0.75;
-        }
+      wheels.forEach(w => {
+        w.mesh.children[0].rotation.x += moveDist * 0.8; w.mesh.children[1].rotation.x += moveDist * 0.8;
+        if (w.isFront) w.mesh.rotation.y = State.steering * 0.75;
       });
     }
 
     State.rpm = 800 + Math.abs(State.speed) * 28;
     audioSys.update(Math.abs(State.speed), State.rpm, State.isDrifting, Input.forward);
     updateInfiniteWorld(State.posX, State.posZ);
+    updateNPCCars(); // NPC 트래픽 업데이트
     updateParticles();
     updateCamera();
     updateHUD();
@@ -1214,79 +1207,47 @@
     const positions = particleGeo.attributes.position.array;
     const opacities = particleGeo.attributes.opacity.array;
 
-    // Emit Smoke when drifting
     if (State.isDrifting && Math.abs(State.speed) > 25) {
-      const sin = Math.sin(State.angle);
-      const cos = Math.cos(State.angle);
-
-      // Emit 2 particles per frame
+      const sin = Math.sin(State.angle), cos = Math.cos(State.angle);
       for(let e = 0; e < 2; e++) {
-        const side = (e === 0) ? 0.9 : -0.9;
-        const pIdx = particleIdx * 3;
-
-        // Position at rear tires
+        const side = (e === 0) ? 0.9 : -0.9; const pIdx = particleIdx * 3;
         positions[pIdx] = State.posX + (-side * cos - 1.6 * sin) + (Math.random()-0.5)*0.3;
-        positions[pIdx + 1] = 0.25;
+        positions[pIdx + 1] = State.posY + 0.25; // 파티클 높이도 Y보정 반영
         positions[pIdx + 2] = State.posZ + (side * sin - 1.6 * cos) + (Math.random()-0.5)*0.3;
         opacities[particleIdx] = 0.85;
-
         particleIdx = (particleIdx + 1) % particleCount;
       }
     }
 
-    // Animate active smoke particles
     for(let i = 0; i < particleCount; i++) {
       const pY = i * 3 + 1;
       if(positions[pY] > -100) {
-        positions[pY] += 0.06; // Float upwards
-        positions[pY - 1] += (Math.random()-0.5)*0.08;
-        positions[pY + 1] += (Math.random()-0.5)*0.08;
-
-        opacities[i] -= 0.02; // Fade out
-
-        if(opacities[i] <= 0) {
-          positions[pY] = -999; // Reset below world
-        }
+        positions[pY] += 0.06; positions[pY - 1] += (Math.random()-0.5)*0.08; positions[pY + 1] += (Math.random()-0.5)*0.08;
+        opacities[i] -= 0.02;
+        if(opacities[i] <= 0) positions[pY] = -999;
       }
     }
-    particleGeo.attributes.position.needsUpdate = true;
-    particleGeo.attributes.opacity.needsUpdate = true;
+    particleGeo.attributes.position.needsUpdate = true; particleGeo.attributes.opacity.needsUpdate = true;
   }
 
   function updateCamera() {
     if (!carGroup) return;
-
     if (State.cameraMode === 0) {
-      const dist = 10.5 + (State.speed / 65);
-      const height = 4.2 - Math.min(State.speed / 220, 0.9);
-
-      const targetX = State.posX - Math.sin(State.angle) * dist;
-      const targetZ = State.posZ - Math.cos(State.angle) * dist;
-
+      const dist = 10.5 + (State.speed / 65); const height = 4.2 - Math.min(State.speed / 220, 0.9);
+      const targetX = State.posX - Math.sin(State.angle) * dist, targetZ = State.posZ - Math.cos(State.angle) * dist;
       camera.position.x += (targetX - camera.position.x) * 0.12;
-      camera.position.y += (height - camera.position.y) * 0.12;
+      camera.position.y += ((height + State.posY) - camera.position.y) * 0.12; // 카메라 높이도 Y보정
       camera.position.z += (targetZ - camera.position.z) * 0.12;
-
-      const lookX = State.posX + Math.sin(State.angle) * 5;
-      const lookZ = State.posZ + Math.cos(State.angle) * 5;
       camera.up.set(0, 1, 0);
-      camera.lookAt(lookX, 1.0, lookZ);
-
+      camera.lookAt(State.posX + Math.sin(State.angle) * 5, 1.0 + State.posY, State.posZ + Math.cos(State.angle) * 5);
     } else if (State.cameraMode === 1) {
-      const hoodX = State.posX + Math.sin(State.angle) * 0.5;
-      const hoodZ = State.posZ + Math.cos(State.angle) * 0.5;
-      camera.position.set(hoodX, 1.35, hoodZ);
-      const lookX = State.posX + Math.sin(State.angle) * 20;
-      const lookZ = State.posZ + Math.cos(State.angle) * 20;
+      camera.position.set(State.posX + Math.sin(State.angle) * 0.5, 1.35 + State.posY, State.posZ + Math.cos(State.angle) * 0.5);
       camera.up.set(0, 1, 0);
-      camera.lookAt(lookX, 1.2, lookZ);
-
+      camera.lookAt(State.posX + Math.sin(State.angle) * 20, 1.2 + State.posY, State.posZ + Math.cos(State.angle) * 20);
     } else {
       camera.position.x += (State.posX - camera.position.x) * 0.1;
       camera.position.z += (State.posZ - camera.position.z) * 0.1;
-      camera.position.y = 65;
-      camera.up.set(0, 1, 0);
-      camera.lookAt(camera.position.x, 0, camera.position.z);
+      camera.position.y = 65; camera.up.set(0, 1, 0); camera.lookAt(camera.position.x, 0, camera.position.z);
     }
 
     const sun = scene.getObjectByName('sunLight');
@@ -1305,17 +1266,10 @@
 
     const driftBox = document.getElementById('drift-box');
     if (State.isDrifting) {
-      driftBox.style.opacity = '1';
-      document.getElementById('drift-score').innerText = State.driftScore;
-      driftBox.classList.add('scale-105');
+      driftBox.style.opacity = '1'; document.getElementById('drift-score').innerText = State.driftScore; driftBox.classList.add('scale-105');
     } else {
       driftBox.classList.remove('scale-105');
-      if (State.driftScore > 0) {
-        setTimeout(() => {
-          driftBox.style.opacity = '0';
-          State.driftScore = 0;
-        }, 1500);
-      }
+      if (State.driftScore > 0) setTimeout(() => { driftBox.style.opacity = '0'; State.driftScore = 0; }, 1500);
     }
   }
 
