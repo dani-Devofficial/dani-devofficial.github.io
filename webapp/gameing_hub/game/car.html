@@ -57,6 +57,18 @@
       <div class="text-[9px] text-slate-400 font-bold mt-1 tracking-widest uppercase font-orbitron">GPS RADAR</div>
     </div>
 
+    <!-- FPS Counter -->
+<div class="absolute top-5 left-5 z-50
+                px-3 py-1.5
+                bg-black/50 backdrop-blur-md
+                border border-white/10
+                rounded-lg
+                font-orbitron text-xs
+                text-emerald-400
+                pointer-events-none">
+      FPS <span id="fps-counter">60</span>
+    </div>
+
     <!-- Top Right Dashboard Buttons -->
     <div class="flex flex-col gap-2 pointer-events-auto items-end">
       <div class="flex gap-2">
@@ -121,11 +133,20 @@
           <span id="hud-speed" class="text-6xl md:text-7xl font-black font-orbitron text-white tracking-tighter gauge-glow">0</span>
           <span class="text-sm font-bold text-sky-200 font-orbitron ml-1">KM/H</span>
         </div>
-        <!-- Nitro Gauge Bar -->
-        <div class="w-48 h-2.5 bg-slate-800 rounded-full mt-3 overflow-hidden p-0.5 border border-slate-600 shadow-inner">
-          <div id="nitro-bar" class="h-full bg-gradient-to-r from-sky-400 via-indigo-500 to-purple-500 rounded-full transition-all duration-100 shadow-[0_0_10px_rgba(99,102,241,0.8)]" style="width: 100%"></div>
+      <div class="w-48 h-2.5 bg-slate-800 rounded-full mt-3 overflow-hidden p-0.5 border border-slate-600 shadow-inner">
+        <div id="battery-bar"
+            class="h-full bg-gradient-to-r from-emerald-400 via-green-500 to-cyan-400 rounded-full transition-all duration-100 shadow-[0_0_10px_rgba(34,197,94,0.8)]"
+            style="width: 100%">
         </div>
-        <div class="text-[9px] text-sky-300 font-bold mt-1.5 font-orbitron tracking-widest">N2O BOOST</div>
+      </div>
+
+      <div class="flex items-center justify-center gap-1.5 mt-1.5">
+        <span class="text-[10px]">🔋</span>
+        <span id="battery-text"
+              class="text-[9px] text-emerald-300 font-bold font-orbitron tracking-widest">
+          BATTERY 100%
+        </span>
+      </div>
       </div>
 
       <!-- RPM Display -->
@@ -302,7 +323,8 @@
     posY: 0, // Added posY for sidewalk bump
     posZ: 0,
     gear: 'D',
-    nitro: 100,
+    battery: 100,
+    engineOn: true,
     isBoosting: false,
     isDrifting: false,
     driftScore: 0,
@@ -319,6 +341,10 @@
   const Input = { forward: false, backward: false, left: false, right: false, drift: false, nitro: false };
 
   let scene, camera, renderer;
+    // FPS 측정
+  let fpsFrames = 0;
+  let fpsLastTime = performance.now();
+  let currentFPS = 60;
   let carGroup, carBodyMesh, wheels = [];
   let headlightLights = [], tailLights = [], underglowLight = null;
   let minimapCtx;
@@ -1092,6 +1118,21 @@
   function updatePhysics() {
     if (!State.isPlaying) return;
     const config = CarConfigs[State.selectedCar];
+    // 엔진이 꺼져 있으면 차량을 가속할 수 없음
+    if (!State.engineOn) {
+      State.rpm = 0;
+      State.isBoosting = false;
+
+      // 관성으로 천천히 감속
+      State.speed *= 0.97;
+
+      // 거의 멈추면 완전히 정지
+      if (Math.abs(State.speed) < 0.05) {
+        State.speed = 0;
+      }
+
+      return;
+    }
 
     // Check if on sidewalk (보도블럭 위 확인)
     let onSidewalk = false;
@@ -1112,21 +1153,112 @@
     // 보도블럭 위에서는 가속도도 약간 감소
     if (onSidewalk) currentAccel *= 0.8;
 
-    if (Input.nitro && State.nitro > 2 && !onSidewalk) { // 보도블럭 위에서는 니트로 불가
-      currentAccel *= 1.65; State.nitro -= 0.6; State.isBoosting = true;
-      camera.fov = THREE.MathUtils.lerp(camera.fov, 78, 0.1);
-    } else {
-      State.nitro = Math.min(100, State.nitro + 0.12); State.isBoosting = false;
-      camera.fov = THREE.MathUtils.lerp(camera.fov, 60, 0.1);
+// ================================
+// 🔋 배터리 시스템
+// ================================
+
+// 배터리가 충분하고 니트로 키를 누르고 있을 때만 부스트
+const batteryCanBoost =
+  Input.nitro &&
+  State.battery > 0 &&
+  !onSidewalk;
+
+// 🚀 부스트
+if (batteryCanBoost) {
+  currentAccel *= 1.65;
+
+  // 부스트 배터리 소모
+  State.battery -= 0.18;
+
+  // 배터리가 0 이하가 되는 즉시 강제 종료
+  if (State.battery <= 0) {
+    State.battery = 0;
+    State.isBoosting = false;
+  } else {
+    State.isBoosting = true;
+  }
+
+  camera.fov = THREE.MathUtils.lerp(
+    camera.fov,
+    78,
+    0.1
+  );
+
+} else {
+  // 니트로 사용 불가
+  State.isBoosting = false;
+
+  camera.fov = THREE.MathUtils.lerp(
+    camera.fov,
+    60,
+    0.1
+  );
+}
+
+  // 배터리 범위 제한
+  State.battery = Math.max(
+    0,
+    Math.min(100, State.battery)
+  );
+
+  // 🔥 배터리가 0이면 무조건 부스트 차단
+  if (State.battery <= 0) {
+    State.battery = 0;
+    State.isBoosting = false;
+  }
+
+  // 부스트가 꺼져 있으면 일반 최고속도만 사용
+  const maxSpd = State.isBoosting
+    ? config.maxSpeed * 1.35
+    : config.maxSpeed;
+
+  camera.updateProjectionMatrix();
+
+// 🔋 배터리가 있으면 정상 주행
+if (State.battery > 0) {
+
+  if (Input.forward) {
+    State.speed += currentAccel;
+    State.gear = 'D';
+
+  } else if (Input.backward) {
+    State.speed -= currentAccel * 0.8;
+
+    if (State.speed < 0) {
+      State.gear = 'R';
     }
-    camera.updateProjectionMatrix();
 
-    if (Input.forward) { State.speed += currentAccel; State.gear = 'D'; }
-    else if (Input.backward) { State.speed -= currentAccel * 0.8; if (State.speed < 0) State.gear = 'R'; }
-    else { State.speed *= friction; } // 도로에 따른 마찰력 적용
+  } else {
+    // 가속 페달을 놓으면 자연스럽게 감속
+    State.speed *= friction;
 
-    const maxSpd = State.isBoosting ? config.maxSpeed * 1.35 : config.maxSpeed;
-    State.speed = Math.max(-config.maxSpeed * 0.3, Math.min(maxSpd, State.speed));
+    if (Math.abs(State.speed) < 0.05) {
+      State.speed = 0;
+    }
+  }
+
+} else {
+
+  // ================================
+  // 🔋 배터리 0%
+  // ================================
+
+  State.battery = 0;
+  State.isBoosting = false;
+  State.gear = 'N';
+
+  // 엔진 출력 차단 → 관성으로만 감속
+  State.speed *= 0.96;
+
+  if (Math.abs(State.speed) < 0.05) {
+    State.speed = 0;
+  }
+}
+
+    State.speed = Math.max(
+      -config.maxSpeed * 0.3,
+      Math.min(maxSpd, State.speed)
+    );
 
     const steerSensitivity = config.handling * (1 - Math.min(Math.abs(State.speed) / 420, 0.55));
     if (Input.left) State.steering = Math.min(0.65, State.steering + steerSensitivity);
@@ -1258,11 +1390,61 @@
     }
   }
 
+  // FPS 계산
+  function updateFPS() {
+    fpsFrames++;
+
+    const now = performance.now();
+    const elapsed = now - fpsLastTime;
+
+    // 0.5초마다 FPS 갱신
+    if (elapsed >= 500) {
+      currentFPS = Math.round(
+        fpsFrames / (elapsed / 1000)
+      );
+
+      fpsFrames = 0;
+      fpsLastTime = now;
+
+      const fpsElement = document.getElementById('fps-counter');
+
+      if (fpsElement) {
+        fpsElement.textContent = currentFPS;
+      }
+    }
+  }
+
   function updateHUD() {
     document.getElementById('hud-speed').innerText = Math.floor(Math.abs(State.speed));
     document.getElementById('hud-rpm').innerText = Math.floor(State.rpm);
     document.getElementById('hud-gear').innerText = State.gear;
-    document.getElementById('nitro-bar').style.width = `${State.nitro}%`;
+    const batteryBar = document.getElementById('battery-bar');
+    const batteryText = document.getElementById('battery-text');
+
+    const battery = Math.floor(State.battery);
+
+    batteryBar.style.width = `${battery}%`;
+    batteryText.innerText = `BATTERY ${battery}%`;
+
+    if (battery <= 10) {
+      batteryBar.className =
+        'h-full bg-gradient-to-r from-red-500 to-orange-500 rounded-full transition-all duration-100 shadow-[0_0_15px_rgba(239,68,68,0.9)]';
+
+      batteryText.className =
+        'text-[9px] text-red-400 font-bold font-orbitron tracking-widest animate-pulse';
+    } else if (battery <= 30) {
+      batteryBar.className =
+        'h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-100 shadow-[0_0_12px_rgba(251,191,36,0.8)]';
+
+      batteryText.className =
+        'text-[9px] text-yellow-300 font-bold font-orbitron tracking-widest';
+    } else {
+      batteryBar.className =
+        'h-full bg-gradient-to-r from-emerald-400 via-green-500 to-cyan-400 rounded-full transition-all duration-100 shadow-[0_0_10px_rgba(34,197,94,0.8)]';
+
+      batteryText.className =
+        'text-[9px] text-emerald-300 font-bold font-orbitron tracking-widest';
+    }
 
     const driftBox = document.getElementById('drift-box');
     if (State.isDrifting) {
@@ -1275,6 +1457,9 @@
 
   function animate() {
     requestAnimationFrame(animate);
+
+    updateFPS();
+
     updatePhysics();
     drawMinimap();
     renderer.render(scene, camera);
