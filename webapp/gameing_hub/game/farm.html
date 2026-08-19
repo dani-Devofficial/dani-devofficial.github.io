@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 힐링 리얼 농장 (3D Farm Simulator)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background-color: #1a202c;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 8px;
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.03); }
+        }
+        .float-text {
+            position: absolute;
+            pointer-events: none;
+            font-weight: bold;
+            font-size: 1.25rem;
+            animation: floatUp 1.2s ease-out forwards;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            z-index: 50;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden text-white">
+
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Top HUD Bar -->
+    <div class="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none z-10">
+        <!-- Coins and Status -->
+        <div class="flex items-center gap-4 bg-slate-900/80 backdrop-blur-md px-5 py-3 rounded-2xl border border-amber-500/30 shadow-xl pointer-events-auto">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🪙</span>
+                <div>
+                    <div class="text-xs text-amber-300 font-semibold uppercase tracking-wider">골드 코인</div>
+                    <div id="coin-display" class="text-2xl font-extrabold text-amber-400">100</div>
+                </div>
+            </div>
+            <div class="h-8 w-px background-slate-700"></div>
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🌱</span>
+                <div>
+                    <div class="text-xs text-emerald-300 font-semibold uppercase tracking-wider">수확 성공</div>
+                    <div id="harvest-count" class="text-xl font-bold text-emerald-400">0개</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Controls & Time -->
+        <div class="flex items-center gap-3 pointer-events-auto">
+            <button id="btn-shop" onclick="game.toggleShop()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition transform">
+                <span>🛒</span> 상점
+            </button>
+            <button id="btn-inventory" onclick="game.toggleInventory()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition transform">
+                <span>🎒</span> 가방 [Space]
+            </button>
+            <button id="btn-backup" onclick="game.toggleBackupModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition transform">
+                <span>💾</span> 저장/백업
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Equipped Tool Banner -->
+    <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900/90 backdrop-blur-md px-6 py-3 rounded-2xl border border-slate-700 shadow-2xl flex items-center gap-4 z-10 pointer-events-auto">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest">현재 손에 쥔 도구:</div>
+        <div id="equipped-slot" class="flex items-center gap-3 bg-slate-800 px-4 py-2 rounded-xl border border-emerald-500/40">
+            <span id="equipped-icon" class="text-2xl">🌾</span>
+            <div>
+                <div id="equipped-name" class="font-extrabold text-emerald-400 text-sm">손 (빈손)</div>
+                <div id="equipped-desc" class="text-xs text-slate-400">밭을 클릭하여 수확 또는 관찰합니다.</div>
+            </div>
+        </div>
+        <button onclick="game.clearEquipped()" class="text-xs text-slate-400 hover:text-rose-400 underline ml-2">해제</button>
+    </div>
+
+    <!-- Controls Guide Floating Panel -->
+    <div class="absolute bottom-6 left-6 bg-slate-900/70 backdrop-blur-md p-4 rounded-xl border border-slate-700/50 text-xs text-slate-300 pointer-events-none hidden md:block z-10">
+        <div class="font-bold text-amber-400 mb-1">🎮 조작법 Guide</div>
+        <div>• <span class="text-white font-semibold">WASD / 방향키</span>: 이동</div>
+        <div>• <span class="text-white font-semibold">Space</span>: 가방 열기/닫기</div>
+        <div>• <span class="text-white font-semibold">마우스 클릭</span>: 밭 심기/물주기/수확</div>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div id="inventory-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-3xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🎒</span>
+                    <div>
+                        <h2 class="text-xl font-extrabold text-white">농장 가방 (인벤토리)</h2>
+                        <p class="text-xs text-slate-400">사용할 씨앗이나 거름, 도구를 선택하면 손에 쥐어집니다.</p>
+                    </div>
+                </div>
+                <button onclick="game.toggleInventory()" class="text-slate-400 hover:text-white text-2xl font-bold px-2">&times;</button>
+            </div>
+
+            <!-- Item Tabs & Grid -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">기본 도구 & 아이템</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6" id="tools-grid">
+                    <!-- Tools populated via JS -->
+                </div>
+
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">보유 중인 씨앗</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6" id="seeds-grid">
+                    <!-- Seeds populated via JS -->
+                </div>
+
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">수확한 농작물 (판매 가능)</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="crops-grid">
+                    <!-- Harvested items populated via JS -->
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                <span>TIP: 물을 너무 많이 주면 뿌리가 썩어 식물이 죽습니다!</span>
+                <button onclick="game.toggleInventory()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-5 py-2 rounded-xl transition">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-slate-900 border border-amber-500/30 w-full max-w-2xl rounded-3xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🛒</span>
+                    <div>
+                        <h2 class="text-xl font-extrabold text-amber-400">농장 상점</h2>
+                        <p class="text-xs text-slate-400">코인으로 씨앗과 농자재를 구매하거나 농작물을 판매하세요.</p>
+                    </div>
+                </div>
+                <button onclick="game.toggleShop()" class="text-slate-400 hover:text-white text-2xl font-bold px-2">&times;</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">씨앗 구매</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6" id="shop-seeds-list">
+                    <!-- Shop Items JS -->
+                </div>
+
+                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3">특수 자재 & 거름</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="shop-supplies-list">
+                    <!-- Supplies JS -->
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center">
+                <div class="text-sm font-semibold text-slate-300">내 보유 코인: <span id="shop-coin-display" class="text-amber-400 font-extrabold">100</span> 코인</div>
+                <button onclick="game.toggleShop()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2 rounded-xl transition">상점 나가기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup / Save Modal -->
+    <div id="backup-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-slate-900 border border-indigo-500/40 w-full max-w-md rounded-3xl p-6 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">💾</span>
+                    <h2 class="text-lg font-extrabold text-indigo-400">데이터 저장 & 백업</h2>
+                </div>
+                <button onclick="game.toggleBackupModal()" class="text-slate-400 hover:text-white text-2xl font-bold px-2">&times;</button>
+            </div>
+
+            <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                게임 데이터는 브라우저 LocalStorage에 자동으로 저장됩니다. 다른 기기로 데이터를 이전하거나 안전하게 보관하려면 JSON 파일을 백업하세요.
+            </p>
+
+            <div class="space-y-3 mb-6">
+                <button onclick="game.saveToLocalStorage()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition">
+                    <span>💾</span> 수동 수시 저장 (LocalStorage)
+                </button>
+                <button onclick="game.exportSaveJSON()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
+                    <span>📥</span> JSON 파일로 백업 파일 다운로드
+                </button>
+                
+                <div class="relative w-full">
+                    <input type="file" id="import-file-input" accept=".json" onchange="game.importSaveJSON(event)" class="hidden">
+                    <button onclick="document.getElementById('import-file-input').click()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg">
+                        <span>📤</span> JSON 백업 파일 불러오기
+                    </button>
+                </div>
+
+                <button onclick="game.resetData()" class="w-full bg-rose-900/40 hover:bg-rose-800/60 border border-rose-700/50 text-rose-300 text-xs font-semibold py-2 px-4 rounded-xl transition">
+                    ⚠️ 게임 데이터 초기화 (초기 상태로)
+                </button>
+            </div>
+
+            <button onclick="game.toggleBackupModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-xl text-xs transition">닫기</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed top-20 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // Plants Database Definition
+        const PLANT_TYPES = {
+            CARROT: {
+                id: 'CARROT',
+                name: '당근',
+                icon: '🥕',
+                seedPrice: 10,
+                sellPrice: 25,
+                growthTime: 12, // seconds
+                maxWater: 100,
+                waterThreshold: 85, // max allowed moisture before risk of rotting
+                waterConsumption: 0.15,
+                color: 0xff7700,
+                description: '무난하고 빠르게 잘 자라는 주황색 당근 씨앗.'
+            },
+            TOMATO: {
+                id: 'TOMATO',
+                name: '토마토',
+                icon: '🍅',
+                seedPrice: 20,
+                sellPrice: 50,
+                growthTime: 20,
+                maxWater: 100,
+                waterThreshold: 80,
+                waterConsumption: 0.2,
+                color: 0xee2222,
+                description: '싱싱하고 탐스러운 붉은 토마토 씨앗.'
+            },
+            CORN: {
+                id: 'CORN',
+                name: '옥수수',
+                icon: '🌽',
+                seedPrice: 40,
+                sellPrice: 110,
+                growthTime: 32,
+                maxWater: 100,
+                waterThreshold: 75,
+                waterConsumption: 0.25,
+                color: 0xffdd00,
+                description: '키가 크고 알갱이가 영롱한 고소한 옥수수 씨앗.'
+            },
+            PUMPKIN: {
+                id: 'PUMPKIN',
+                name: '호박',
+                icon: '🎃',
+                seedPrice: 80,
+                sellPrice: 240,
+                growthTime: 50,
+                maxWater: 100,
+                waterThreshold: 70,
+                waterConsumption: 0.3,
+                color: 0xff8800,
+                description: '묵직하고 높은 가치를 지닌 거대한 단호박 씨앗.'
+            },
+            GOLDEN: {
+                id: 'GOLDEN',
+                name: '황금 베리',
+                icon: '🌟',
+                seedPrice: 200,
+                sellPrice: 650,
+                growthTime: 80,
+                maxWater: 100,
+                waterThreshold: 65,
+                waterConsumption: 0.35,
+                color: 0xffd700,
+                description: '반짝이는 빛을 내뿜는 매우 희귀한 전설의 열매 씨앗.'
+            }
+        };
+
+        // Audio Synthesizer Engine using Web Audio API
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playTone(freq, type, duration, gainVal = 0.1) {
+                try {
+                    this.init();
+                    if (this.ctx.state === 'suspended') this.ctx.resume();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e){}
+            }
+            playTill() { this.playTone(120, 'triangle', 0.15, 0.2); }
+            playPlant() { this.playTone(400, 'sine', 0.1, 0.15); }
+            playWater() { this.playTone(600, 'sine', 0.25, 0.12); }
+            playFertilizer() { this.playTone(800, 'sine', 0.2, 0.15); }
+            playHarvest() {
+                this.playTone(523.25, 'sine', 0.1, 0.15);
+                setTimeout(() => this.playTone(659.25, 'sine', 0.1, 0.15), 80);
+                setTimeout(() => this.playTone(783.99, 'sine', 0.2, 0.2), 160);
+            }
+            playCoin() {
+                this.playTone(987.77, 'sine', 0.08, 0.15);
+                setTimeout(() => this.playTone(1318.51, 'sine', 0.15, 0.2), 60);
+            }
+            playError() {
+                this.playTone(150, 'sawtooth', 0.2, 0.15);
+            }
+        }
+
+        class FarmGame {
+            constructor() {
+                this.sound = new SoundEngine();
+                this.coins = 100;
+                this.totalHarvested = 0;
+                
+                // Inventory
+                this.inventory = {
+                    seeds: {
+                        CARROT: 3,
+                        TOMATO: 2,
+                        CORN: 0,
+                        PUMPKIN: 0,
+                        GOLDEN: 0
+                    },
+                    fertilizer: 2,
+                    waterCan: 1, // Unlimited water tool
+                    hoe: 1,
+                    crops: {
+                        CARROT: 0,
+                        TOMATO: 0,
+                        CORN: 0,
+                        PUMPKIN: 0,
+                        GOLDEN: 0
+                    }
+                };
+
+                // Active hand equip
+                this.equipped = null; // { type: 'TOOL'|'SEED'|'FERTILIZER', id: string, name: string, icon: string }
+
+                // Farm Plots Grid State
+                this.gridSize = 4; // 4x4 = 16 plots
+                this.plots = []; // Array of plot objects
+
+                // Player state
+                this.playerPos = new THREE.Vector3(0, 0, 4);
+                this.playerRotation = 0;
+                this.moveSpeed = 0.12;
+                this.keys = {};
+
+                // UI Modals
+                this.isInventoryOpen = false;
+                this.isShopOpen = false;
+                this.isBackupOpen = false;
+
+                // Three.js Core
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+                this.hoveredPlot = null;
+
+                // Procedural Meshes
+                this.playerMesh = null;
+                this.plotMeshes = [];
+                this.particleSystems = [];
+
+                this.initThree();
+                this.initPlots();
+                this.buildEnvironment();
+                this.buildPlayer();
+                this.setupEventListeners();
+                this.loadFromLocalStorage();
+                this.updateUI();
+                this.animate();
+
+                // Auto save interval
+                setInterval(() => this.saveToLocalStorage(true), 15000);
+            }
+
+            initThree() {
+                const container = document.getElementById('canvas-container');
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x87ceeb); // Sky blue
+                this.scene.fog = new THREE.FogExp2(0x87ceeb, 0.015);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0, 14, 18);
+                this.camera.lookAt(0, 0, 0);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                container.appendChild(this.renderer.domElement);
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+
+                const sunLight = new THREE.DirectionalLight(0xfff5cc, 0.9);
+                sunLight.position.set(20, 40, 20);
+                sunLight.castShadow = true;
+                sunLight.shadow.mapSize.width = 2048;
+                sunLight.shadow.mapSize.height = 2048;
+                sunLight.shadow.camera.near = 0.5;
+                sunLight.shadow.camera.far = 100;
+                const d = 25;
+                sunLight.shadow.camera.left = -d;
+                sunLight.shadow.camera.right = d;
+                sunLight.shadow.camera.top = d;
+                sunLight.shadow.camera.bottom = -d;
+                this.scene.add(sunLight);
+
+                // Hemisphere Light for natural ambient shadow warmth
+                const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444455, 0.4);
+                hemiLight.position.set(0, 50, 0);
+                this.scene.add(hemiLight);
+            }
+
+            initPlots() {
+                const spacing = 2.2;
+                const offset = ((this.gridSize - 1) * spacing) / 2;
+
+                for (let r = 0; r < this.gridSize; r++) {
+                    for (let c = 0; c < this.gridSize; c++) {
+                        const index = r * this.gridSize + c;
+                        const posX = c * spacing - offset;
+                        const posZ = r * spacing - offset - 2;
+
+                        // Plot Data Object
+                        const plotData = {
+                            id: index,
+                            row: r,
+                            col: c,
+                            x: posX,
+                            z: posZ,
+                            isTilled: false,
+                            moisture: 0, // 0 - 100
+                            fertilized: false,
+                            plant: null // { type: 'CARROT', stage: 0-3, progress: 0-1, isRotten: false }
+                        };
+                        this.plots.push(plotData);
+
+                        // 3D Soil Tile Mesh
+                        const group = new THREE.Group();
+                        group.position.set(posX, 0, posZ);
+
+                        // Soil Base Box
+                        const soilGeo = new THREE.BoxGeometry(1.9, 0.25, 1.9);
+                        const soilMat = new THREE.MeshStandardMaterial({
+                            color: 0x8b5a2b, // Dry untouched ground
+                            roughness: 0.9,
+                            metalness: 0.1
+                        });
+                        const soilMesh = new THREE.Mesh(soilGeo, soilMat);
+                        soilMesh.position.y = 0.125;
+                        soilMesh.receiveShadow = true;
+                        soilMesh.castShadow = true;
+                        soilMesh.userData = { plotIndex: index };
+                        group.add(soilMesh);
+
+                        // Border Wooden Frame
+                        const frameGeo = new THREE.BoxGeometry(2.05, 0.15, 2.05);
+                        const frameMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.8 });
+                        const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+                        frameMesh.position.y = 0.05;
+                        group.add(frameMesh);
+
+                        // Highlight Border (for selection/hover)
+                        const hlGeo = new THREE.BoxGeometry(2.0, 0.28, 2.0);
+                        const hlMat = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true, visible: false });
+                        const hlMesh = new THREE.Mesh(hlGeo, hlMat);
+                        hlMesh.position.y = 0.14;
+                        group.add(hlMesh);
+
+                        // Container group for dynamic Plant Mesh
+                        const plantGroup = new THREE.Group();
+                        plantGroup.position.y = 0.25;
+                        group.add(plantGroup);
+
+                        this.scene.add(group);
+                        this.plotMeshes.push({
+                            group: group,
+                            soilMesh: soilMesh,
+                            hlMesh: hlMesh,
+                            plantGroup: plantGroup,
+                            soilMat: soilMat
+                        });
+                    }
+                }
+            }
+
+            buildEnvironment() {
+                // Grass Ground Plane
+                const groundGeo = new THREE.PlaneGeometry(80, 80);
+                const groundMat = new THREE.MeshStandardMaterial({ color: 0x55aa44, roughness: 0.9 });
+                const ground = new THREE.Mesh(groundGeo, groundMat);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = 0;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                // Pathway Stone Pad under farm grid
+                const pathGeo = new THREE.BoxGeometry(11, 0.02, 11);
+                const pathMat = new THREE.MeshStandardMaterial({ color: 0xa08560, roughness: 0.95 });
+                const path = new THREE.Mesh(pathGeo, pathMat);
+                path.position.set(0, 0.01, -2);
+                path.receiveShadow = true;
+                this.scene.add(path);
+
+                // 1. Cozy Farmhouse
+                const houseGroup = new THREE.Group();
+                houseGroup.position.set(-12, 0, -10);
+
+                // Walls
+                const bodyGeo = new THREE.BoxGeometry(6, 4, 6);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xddc09f, roughness: 0.7 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.y = 2;
+                body.castShadow = true;
+                body.receiveShadow = true;
+                houseGroup.add(body);
+
+                // Roof
+                const roofGeo = new THREE.ConeGeometry(5.2, 3, 4);
+                const roofMat = new THREE.MeshStandardMaterial({ color: 0xaa3322, roughness: 0.5 });
+                const roof = new THREE.Mesh(roofGeo, roofMat);
+                roof.position.y = 5.5;
+                roof.rotation.y = Math.PI / 4;
+                roof.castShadow = true;
+                houseGroup.add(roof);
+
+                // Door
+                const doorGeo = new THREE.BoxGeometry(1.2, 2.2, 0.1);
+                const doorMat = new THREE.MeshStandardMaterial({ color: 0x4a2c11 });
+                const door = new THREE.Mesh(doorGeo, doorMat);
+                door.position.set(0, 1.1, 3.01);
+                houseGroup.add(door);
+
+                this.scene.add(houseGroup);
+
+                // 2. Windmill
+                const millGroup = new THREE.Group();
+                millGroup.position.set(12, 0, -12);
+
+                const millBodyGeo = new THREE.CylinderGeometry(1.8, 2.8, 8, 8);
+                const millBodyMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.6 });
+                const millBody = new THREE.Mesh(millBodyGeo, millBodyMat);
+                millBody.position.y = 4;
+                millBody.castShadow = true;
+                millGroup.add(millBody);
+
+                // Mill Roof Cap
+                const capGeo = new THREE.ConeGeometry(2.2, 2, 8);
+                const capMat = new THREE.MeshStandardMaterial({ color: 0x335588 });
+                const cap = new THREE.Mesh(capGeo, capMat);
+                cap.position.y = 9;
+                millGroup.add(cap);
+
+                // Rotating Blades Group
+                this.millBlades = new THREE.Group();
+                this.millBlades.position.set(0, 7.5, 1.9);
+
+                for (let i = 0; i < 4; i++) {
+                    const bladeGeo = new THREE.BoxGeometry(0.4, 4.5, 0.05);
+                    const bladeMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+                    const blade = new THREE.Mesh(bladeGeo, bladeMat);
+                    blade.position.y = 2.25;
+                    const bladeHolder = new THREE.Group();
+                    bladeHolder.rotation.z = (Math.PI / 2) * i;
+                    bladeHolder.add(blade);
+                    this.millBlades.add(bladeHolder);
+                }
+                millGroup.add(this.millBlades);
+                this.scene.add(millGroup);
+
+                // 3. Water Well
+                const wellGroup = new THREE.Group();
+                wellGroup.position.set(-8, 0, 5);
+
+                const wellRimGeo = new THREE.CylinderGeometry(1.2, 1.3, 0.8, 12, 1, true);
+                const wellMat = new THREE.MeshStandardMaterial({ color: 0x777777, side: THREE.DoubleSide });
+                const wellRim = new THREE.Mesh(wellRimGeo, wellMat);
+                wellRim.position.y = 0.4;
+                wellRim.castShadow = true;
+                wellGroup.add(wellRim);
+
+                // Water inside well
+                const wellWaterGeo = new THREE.CircleGeometry(1.1, 12);
+                const wellWaterMat = new THREE.MeshStandardMaterial({ color: 0x2288ff, roughness: 0.1, metalness: 0.8 });
+                const wellWater = new THREE.Mesh(wellWaterGeo, wellWaterMat);
+                wellWater.rotation.x = -Math.PI / 2;
+                wellWater.position.y = 0.35;
+                wellGroup.add(wellWater);
+
+                this.scene.add(wellGroup);
+
+                // 4. Decorative Trees around the border
+                const treePositions = [
+                    [-15, 8], [-14, -2], [14, 6], [10, -4], [4, -14], [-6, -15], [15, -15]
+                ];
+                treePositions.forEach(([tx, tz]) => {
+                    const treeGroup = new THREE.Group();
+                    treeGroup.position.set(tx, 0, tz);
+
+                    const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 2.5, 7);
+                    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3d28 });
+                    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                    trunk.position.y = 1.25;
+                    trunk.castShadow = true;
+                    treeGroup.add(trunk);
+
+                    const leavesGeo = new THREE.ConeGeometry(2, 4, 7);
+                    const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.8 });
+                    const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                    leaves.position.y = 3.8;
+                    leaves.castShadow = true;
+                    treeGroup.add(leaves);
+
+                    this.scene.add(treeGroup);
+                });
+
+                // Fences around plot area
+                this.buildFences();
+            }
+
+            buildFences() {
+                const fenceGroup = new THREE.Group();
+                const size = 6.5;
+
+                const makeFencePost = (x, z) => {
+                    const postGeo = new THREE.BoxGeometry(0.25, 1.2, 0.25);
+                    const postMat = new THREE.MeshStandardMaterial({ color: 0x6d4c41 });
+                    const post = new THREE.Mesh(postGeo, postMat);
+                    post.position.set(x, 0.6, z);
+                    post.castShadow = true;
+                    fenceGroup.add(post);
+                };
+
+                const makeFenceRail = (x, z, rotY) => {
+                    const railGeo = new THREE.BoxGeometry(3, 0.12, 0.08);
+                    const railMat = new THREE.MeshStandardMaterial({ color: 0x8d6e63 });
+                    const rail1 = new THREE.Mesh(railGeo, railMat);
+                    rail1.position.set(x, 0.4, z);
+                    rail1.rotation.y = rotY;
+                    rail1.castShadow = true;
+
+                    const rail2 = rail1.clone();
+                    rail2.position.y = 0.8;
+                    fenceGroup.add(rail1);
+                    fenceGroup.add(rail2);
+                };
+
+                // Perimeter coordinates around grid center (0, -2)
+                const cZ = -2;
+                for (let x = -size; x <= size; x += 3) {
+                    makeFencePost(x, cZ - size);
+                    makeFencePost(x, cZ + size);
+                    if (x < size) {
+                        makeFenceRail(x + 1.5, cZ - size, 0);
+                        makeFenceRail(x + 1.5, cZ + size, 0);
+                    }
+                }
+                for (let z = cZ - size; z <= cZ + size; z += 3) {
+                    makeFencePost(-size, z);
+                    makeFencePost(size, z);
+                    if (z < cZ + size) {
+                        makeFenceRail(-size, z + 1.5, Math.PI / 2);
+                        makeFenceRail(size, z + 1.5, Math.PI / 2);
+                    }
+                }
+
+                this.scene.add(fenceGroup);
+            }
+
+            buildPlayer() {
+                this.playerMesh = new THREE.Group();
+
+                // Body (Shirt)
+                const bodyGeo = new THREE.CylinderGeometry(0.4, 0.35, 1.1, 8);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2980b9 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.y = 0.85;
+                body.castShadow = true;
+                this.playerMesh.add(body);
+
+                // Head
+                const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
+                const headMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.y = 1.6;
+                head.castShadow = true;
+                this.playerMesh.add(head);
+
+                // Farmer Straw Hat
+                const hatBrimGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.05, 16);
+                const hatMat = new THREE.MeshStandardMaterial({ color: 0xddaa55 });
+                const hatBrim = new THREE.Mesh(hatBrimGeo, hatMat);
+                hatBrim.position.y = 1.85;
+                this.playerMesh.add(hatBrim);
+
+                const hatTopGeo = new THREE.ConeGeometry(0.45, 0.5, 12);
+                const hatTop = new THREE.Mesh(hatTopGeo, hatMat);
+                hatTop.position.y = 2.1;
+                this.playerMesh.add(hatTop);
+
+                // Arms
+                const armGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.7);
+                const armMat = new THREE.MeshStandardMaterial({ color: 0x2980b9 });
+                
+                this.leftArm = new THREE.Mesh(armGeo, armMat);
+                this.leftArm.position.set(-0.5, 0.9, 0);
+                this.playerMesh.add(this.leftArm);
+
+                this.rightArm = new THREE.Mesh(armGeo, armMat);
+                this.rightArm.position.set(0.5, 0.9, 0);
+                this.playerMesh.add(this.rightArm);
+
+                // Legs
+                const legGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.65);
+                const legMat = new THREE.MeshStandardMaterial({ color: 0x34495e });
+
+                this.leftLeg = new THREE.Mesh(legGeo, legMat);
+                this.leftLeg.position.set(-0.2, 0.325, 0);
+                this.leftLeg.castShadow = true;
+                this.playerMesh.add(this.leftLeg);
+
+                this.rightLeg = new THREE.Mesh(legGeo, legMat);
+                this.rightLeg.position.set(0.2, 0.325, 0);
+                this.rightLeg.castShadow = true;
+                this.playerMesh.add(this.rightLeg);
+
+                this.playerMesh.position.copy(this.playerPos);
+                this.scene.add(this.playerMesh);
+            }
+
+            setupEventListeners() {
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                // Keydown / Keyup for movement & space bar
+                window.addEventListener('keydown', (e) => {
+                    const k = e.key.toLowerCase();
+                    this.keys[k] = true;
+
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.toggleInventory();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    const k = e.key.toLowerCase();
+                    this.keys[k] = false;
+                });
+
+                // Mouse interaction for Raycasting Plots
+                window.addEventListener('mousemove', (e) => {
+                    this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                });
+
+                window.addEventListener('click', (e) => {
+                    // Ignore clicks on UI elements
+                    if (e.target.closest('#inventory-modal') || e.target.closest('#shop-modal') || e.target.closest('#backup-modal') || e.target.closest('button')) {
+                        return;
+                    }
+                    this.handlePlotClick();
+                });
+            }
+
+            updatePlayer(delta) {
+                let dx = 0;
+                let dz = 0;
+
+                if (this.keys['w'] || this.keys['arrowup']) dz -= 1;
+                if (this.keys['s'] || this.keys['arrowdown']) dz += 1;
+                if (this.keys['a'] || this.keys['arrowleft']) dx -= 1;
+                if (this.keys['d'] || this.keys['arrowright']) dx += 1;
+
+                if (dx !== 0 || dz !== 0) {
+                    // Normalize speed vector
+                    const len = Math.sqrt(dx * dx + dz * dz);
+                    dx /= len;
+                    dz /= len;
+
+                    this.playerPos.x += dx * this.moveSpeed;
+                    this.playerPos.z += dz * this.moveSpeed;
+
+                    // Clamp player within farm boundaries
+                    this.playerPos.x = Math.max(-25, Math.min(25, this.playerPos.x));
+                    this.playerPos.z = Math.max(-25, Math.min(25, this.playerPos.z));
+
+                    // Target rotation angle
+                    const targetAngle = Math.atan2(dx, dz);
+                    this.playerRotation = targetAngle;
+                    this.playerMesh.rotation.y = targetAngle;
+
+                    // Walking bobbing animation
+                    const time = Date.now() * 0.008;
+                    this.leftLeg.rotation.x = Math.sin(time) * 0.6;
+                    this.rightLeg.rotation.x = -Math.sin(time) * 0.6;
+                    this.leftArm.rotation.x = -Math.sin(time) * 0.6;
+                    this.rightArm.rotation.x = Math.sin(time) * 0.6;
+                    this.playerMesh.position.y = Math.abs(Math.sin(time * 2)) * 0.1;
+                } else {
+                    // Reset limb rotations when idle
+                    this.leftLeg.rotation.x = 0;
+                    this.rightLeg.rotation.x = 0;
+                    this.leftArm.rotation.x = 0;
+                    this.rightArm.rotation.x = 0;
+                    this.playerMesh.position.y = 0;
+                }
+
+                this.playerMesh.position.x = this.playerPos.x;
+                this.playerMesh.position.z = this.playerPos.z;
+
+                // Smooth Camera Follow
+                const targetCamX = this.playerPos.x;
+                const targetCamZ = this.playerPos.z + 14;
+                this.camera.position.x += (targetCamX - this.camera.position.x) * 0.05;
+                this.camera.position.z += (targetCamZ - this.camera.position.z) * 0.05;
+                this.camera.lookAt(this.playerPos.x, 0.5, this.playerPos.z - 2);
+            }
+
+            updateRaycast() {
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const interactables = this.plotMeshes.map(pm => pm.soilMesh);
+                const intersects = this.raycaster.intersectObjects(interactables);
+
+                // Reset previous hover highlight
+                if (this.hoveredPlot !== null) {
+                    this.plotMeshes[this.hoveredPlot].hlMesh.material.visible = false;
+                    this.hoveredPlot = null;
+                }
+
+                if (intersects.length > 0) {
+                    const plotIndex = intersects[0].object.userData.plotIndex;
+                    this.hoveredPlot = plotIndex;
+                    this.plotMeshes[plotIndex].hlMesh.material.visible = true;
+                }
+            }
+
+            handlePlotClick() {
+                if (this.hoveredPlot === null) return;
+
+                const plot = this.plots[this.hoveredPlot];
+                const meshObj = this.plotMeshes[this.hoveredPlot];
+
+                // Check distance between player and plot
+                const dist = this.playerPos.distanceTo(new THREE.Vector3(plot.x, 0, plot.z));
+                if (dist > 5.5) {
+                    this.showToast('⚠️ 밭에 더 가까이 다가가세요!');
+                    this.sound.playError();
+                    return;
+                }
+
+                // Interaction Logic based on Equipped Item
+                if (!this.equipped) {
+                    // Hand / Inspection & Harvest
+                    if (plot.plant) {
+                        if (plot.plant.isRotten) {
+                            // Clear rotten plant
+                            plot.plant = null;
+                            plot.isTilled = false;
+                            this.renderPlot(this.hoveredPlot);
+                            this.showToast('🍂 썩은 식물을 정리했습니다.');
+                            this.sound.playTill();
+                        } else if (plot.plant.stage === 2) {
+                            // Harvest mature crop!
+                            const plantDef = PLANT_TYPES[plot.plant.type];
+                            this.inventory.crops[plot.plant.type] += 1;
+                            this.totalHarvested += 1;
+
+                            this.spawnFloatingText(`+1 ${plantDef.icon} ${plantDef.name}`, plot.x, plot.z, '#10b981');
+                            this.spawnParticles(plot.x, 0.5, plot.z, plantDef.color, 20);
+
+                            plot.plant = null;
+                            plot.isTilled = false; // Reset plot after harvest
+                            this.renderPlot(this.hoveredPlot);
+                            this.updateUI();
+                            this.sound.playHarvest();
+                            this.showToast(`🎉 ${plantDef.name} 수확 완료! (가방에 추가됨)`);
+                        } else {
+                            const plantDef = PLANT_TYPES[plot.plant.type];
+                            const percent = Math.floor(plot.plant.progress * 100);
+                            this.showToast(`🌱 ${plantDef.name} 자라는 중... (${percent}%) / 습도: ${Math.floor(plot.moisture)}%`);
+                        }
+                    } else if (plot.isTilled) {
+                        this.showToast('🌾 갈아진 밭입니다. 씨앗을 손에 들고 심으세요.');
+                    } else {
+                        this.showToast('🪨 일반 땅입니다. 괭이로 밭을 갈거나 씨앗을 심으세요.');
+                    }
+                    return;
+                }
+
+                // 1. Hoe Tool -> Till soil
+                if (this.equipped.id === 'hoe') {
+                    if (!plot.isTilled) {
+                        plot.isTilled = true;
+                        this.renderPlot(this.hoveredPlot);
+                        this.sound.playTill();
+                        this.showToast('⛏️ 밭을 일구었습니다!');
+                    } else {
+                        this.showToast('이미 갈아진 밭입니다.');
+                    }
+                    return;
+                }
+
+                // 2. Water Can Tool -> Water soil
+                if (this.equipped.id === 'waterCan') {
+                    if (!plot.isTilled) {
+                        this.showToast('먼저 밭을 일구어야 물을 줄 수 있습니다.');
+                        return;
+                    }
+                    plot.moisture = Math.min(100, plot.moisture + 45);
+                    this.renderPlot(this.hoveredPlot);
+                    this.spawnParticles(plot.x, 0.3, plot.z, 0x3399ff, 15);
+                    this.sound.playWater();
+
+                    // Overwatering Check!
+                    if (plot.plant && !plot.plant.isRotten) {
+                        const plantDef = PLANT_TYPES[plot.plant.type];
+                        if (plot.moisture > plantDef.waterThreshold) {
+                            plot.plant.isRotten = true;
+                            this.renderPlot(this.hoveredPlot);
+                            this.showToast(`🚨 물을 너무 많이 주어 ${plantDef.name} 뿌리가 썩었습니다!`);
+                            this.sound.playError();
+                        } else {
+                            this.showToast(`💧 물을 주었습니다. (현재 습도: ${Math.floor(plot.moisture)}%)`);
+                        }
+                    } else {
+                        this.showToast(`💧 토양에 물을 주었습니다. (현재 습도: ${Math.floor(plot.moisture)}%)`);
+                    }
+                    return;
+                }
+
+                // 3. Fertilizer Item -> Accelerate plant growth
+                if (this.equipped.id === 'fertilizer') {
+                    if (plot.plant && !plot.plant.isRotten && plot.plant.stage < 2) {
+                        if (this.inventory.fertilizer <= 0) {
+                            this.showToast('❌ 거름이 부족합니다. 상점에서 구매하세요.');
+                            return;
+                        }
+                        this.inventory.fertilizer -= 1;
+                        plot.fertilized = true;
+                        plot.plant.progress = Math.min(0.99, plot.plant.progress + 0.45); // Boost growth!
+                        
+                        this.spawnParticles(plot.x, 0.5, plot.z, 0x76ff03, 20);
+                        this.renderPlot(this.hoveredPlot);
+                        this.updateUI();
+                        this.sound.playFertilizer();
+                        this.showToast('✨ 거름을 주어 성장이 촉진되었습니다!');
+                    } else {
+                        this.showToast('거름은 자라는 중인 식물에게만 줄 수 있습니다.');
+                    }
+                    return;
+                }
+
+                // 4. Planting Seeds
+                if (this.equipped.type === 'SEED') {
+                    const seedKey = this.equipped.id;
+                    if (this.inventory.seeds[seedKey] <= 0) {
+                        this.showToast('❌ 해당 씨앗 잔여량이 없습니다.');
+                        return;
+                    }
+
+                    if (!plot.isTilled) {
+                        plot.isTilled = true; // Auto-till when planting seed
+                    }
+
+                    if (plot.plant) {
+                        this.showToast('이미 식물이 심어져 있는 밭입니다.');
+                        return;
+                    }
+
+                    // Plant seed!
+                    this.inventory.seeds[seedKey] -= 1;
+                    plot.plant = {
+                        type: seedKey,
+                        stage: 0, // 0: Seedling, 1: Growing, 2: Harvestable
+                        progress: 0.0,
+                        isRotten: false
+                    };
+
+                    this.renderPlot(this.hoveredPlot);
+                    this.updateUI();
+                    this.sound.playPlant();
+                    this.showToast(`🌱 ${PLANT_TYPES[seedKey].name} 씨앗을 심었습니다!`);
+                }
+            }
+
+            updatePlants(delta) {
+                this.plots.forEach((plot, index) => {
+                    // Moisture Decay
+                    if (plot.moisture > 0) {
+                        plot.moisture = Math.max(0, plot.moisture - delta * 1.5);
+                        this.renderPlotSoilColor(index);
+                    }
+
+                    // Growth Logic
+                    if (plot.plant && !plot.plant.isRotten && plot.plant.stage < 2) {
+                        const plantDef = PLANT_TYPES[plot.plant.type];
+                        
+                        // Fertilizer speed multiplier
+                        const fertMult = plot.fertilized ? 2.2 : 1.0;
+                        
+                        // Water moisture impact on growth speed
+                        let waterMult = 1.0;
+                        if (plot.moisture < 15) waterMult = 0.3; // Very slow dry growth
+                        else if (plot.moisture >= 20 && plot.moisture <= plantDef.waterThreshold) waterMult = 1.4; // Ideal moisture!
+
+                        const totalRate = (delta / plantDef.growthTime) * fertMult * waterMult;
+                        plot.plant.progress += totalRate;
+
+                        // Stage Transitions
+                        if (plot.plant.progress >= 0.5 && plot.plant.stage === 0) {
+                            plot.plant.stage = 1;
+                            this.renderPlot(index);
+                        } else if (plot.plant.progress >= 1.0 && plot.plant.stage === 1) {
+                            plot.plant.stage = 2;
+                            plot.plant.progress = 1.0;
+                            this.renderPlot(index);
+                            this.spawnParticles(plot.x, 0.8, plot.z, 0xffff00, 15);
+                        }
+                    }
+                });
+            }
+
+            renderPlotSoilColor(index) {
+                const plot = this.plots[index];
+                const meshObj = this.plotMeshes[index];
+
+                // Change soil color based on tilled state and moisture level
+                if (plot.isTilled) {
+                    // Darker brown when wet
+                    const moistureFactor = plot.moisture / 100;
+                    const r = THREE.MathUtils.lerp(0.35, 0.15, moistureFactor);
+                    const g = THREE.MathUtils.lerp(0.22, 0.09, moistureFactor);
+                    const b = THREE.MathUtils.lerp(0.11, 0.04, moistureFactor);
+                    meshObj.soilMat.color.setRGB(r, g, b);
+                } else {
+                    meshObj.soilMat.color.setHex(0x8b5a2b);
+                }
+            }
+
+            renderPlot(index) {
+                const plot = this.plots[index];
+                const meshObj = this.plotMeshes[index];
+
+                this.renderPlotSoilColor(index);
+
+                // Clear existing plant 3D meshes
+                while (meshObj.plantGroup.children.length > 0) {
+                    meshObj.plantGroup.remove(meshObj.plantGroup.children[0]);
+                }
+
+                if (!plot.plant) return;
+
+                const plantDef = PLANT_TYPES[plot.plant.type];
+
+                // 1. Rotten State Visual
+                if (plot.plant.isRotten) {
+                    const rotGeo = new THREE.ConeGeometry(0.35, 0.4, 5);
+                    const rotMat = new THREE.MeshStandardMaterial({ color: 0x332211, roughness: 1.0 });
+                    const rotMesh = new THREE.Mesh(rotGeo, rotMat);
+                    rotMesh.rotation.z = 0.5;
+                    meshObj.plantGroup.add(rotMesh);
+                    return;
+                }
+
+                // 2. Normal Growth Stages
+                if (plot.plant.stage === 0) {
+                    // Small Sprout Leaves
+                    const sproutGeo = new THREE.ConeGeometry(0.15, 0.3, 4);
+                    const sproutMat = new THREE.MeshStandardMaterial({ color: 0x76ff03 });
+                    const sprout = new THREE.Mesh(sproutGeo, sproutMat);
+                    sprout.position.y = 0.15;
+                    meshObj.plantGroup.add(sprout);
+
+                } else if (plot.plant.stage === 1) {
+                    // Growing Stem
+                    const stemGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.7, 6);
+                    const stemMat = new THREE.MeshStandardMaterial({ color: 0x388e3c });
+                    const stem = new THREE.Mesh(stemGeo, stemMat);
+                    stem.position.y = 0.35;
+                    meshObj.plantGroup.add(stem);
+
+                    // Foliage Leaves
+                    const leafGeo = new THREE.SphereGeometry(0.3, 6, 6);
+                    const leafMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32 });
+                    const leaf = new THREE.Mesh(leafGeo, leafMat);
+                    leaf.position.y = 0.6;
+                    meshObj.plantGroup.add(leaf);
+
+                } else if (plot.plant.stage === 2) {
+                    // Fully Mature Harvestable Fruit Model
+                    const mainStemGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.9, 6);
+                    const mainStemMat = new THREE.MeshStandardMaterial({ color: 0x1b5e20 });
+                    const mainStem = new THREE.Mesh(mainStemGeo, mainStemMat);
+                    mainStem.position.y = 0.45;
+                    meshObj.plantGroup.add(mainStem);
+
+                    // Fruit Geometry based on Type
+                    if (plot.plant.type === 'CARROT') {
+                        const fruitGeo = new THREE.ConeGeometry(0.25, 0.8, 8);
+                        const fruitMat = new THREE.MeshStandardMaterial({ color: plantDef.color, roughness: 0.4 });
+                        const fruit = new THREE.Mesh(fruitGeo, fruitMat);
+                        fruit.rotation.x = Math.PI;
+                        fruit.position.y = 0.3;
+                        meshObj.plantGroup.add(fruit);
+
+                    } else if (plot.plant.type === 'TOMATO') {
+                        for (let i = 0; i < 3; i++) {
+                            const fruitGeo = new THREE.SphereGeometry(0.22, 12, 12);
+                            const fruitMat = new THREE.MeshStandardMaterial({ color: plantDef.color, roughness: 0.3 });
+                            const fruit = new THREE.Mesh(fruitGeo, fruitMat);
+                            const angle = (i * Math.PI * 2) / 3;
+                            fruit.position.set(Math.cos(angle) * 0.3, 0.5 + i * 0.15, Math.sin(angle) * 0.3);
+                            meshObj.plantGroup.add(fruit);
+                        }
+
+                    } else if (plot.plant.type === 'CORN') {
+                        const cornGeo = new THREE.CylinderGeometry(0.18, 0.18, 1.2, 8);
+                        const cornMat = new THREE.MeshStandardMaterial({ color: plantDef.color });
+                        const corn = new THREE.Mesh(cornGeo, cornMat);
+                        corn.position.y = 0.8;
+                        meshObj.plantGroup.add(corn);
+
+                    } else if (plot.plant.type === 'PUMPKIN') {
+                        const pGeo = new THREE.SphereGeometry(0.5, 12, 12);
+                        pGeo.scale(1.2, 0.8, 1.2);
+                        const pMat = new THREE.MeshStandardMaterial({ color: plantDef.color, roughness: 0.5 });
+                        const pumpkin = new THREE.Mesh(pGeo, pMat);
+                        pumpkin.position.y = 0.35;
+                        meshObj.plantGroup.add(pumpkin);
+
+                    } else if (plot.plant.type === 'GOLDEN') {
+                        const gGeo = new THREE.DodecahedronGeometry(0.45);
+                        const gMat = new THREE.MeshStandardMaterial({
+                            color: plantDef.color,
+                            emissive: 0xffaa00,
+                            emissiveIntensity: 0.5,
+                            roughness: 0.2,
+                            metalness: 0.8
+                        });
+                        const golden = new THREE.Mesh(gGeo, gMat);
+                        golden.position.y = 0.6;
+                        meshObj.plantGroup.add(golden);
+                    }
+                }
+            }
+
+            spawnParticles(x, y, z, colorHex, count = 15) {
+                const pGeo = new THREE.BufferGeometry();
+                const positions = new Float32Array(count * 3);
+                const velocities = [];
+
+                for (let i = 0; i < count; i++) {
+                    positions[i * 3] = x + (Math.random() - 0.5) * 0.8;
+                    positions[i * 3 + 1] = y + Math.random() * 0.5;
+                    positions[i * 3 + 2] = z + (Math.random() - 0.5) * 0.8;
+
+                    velocities.push({
+                        x: (Math.random() - 0.5) * 0.08,
+                        y: Math.random() * 0.1 + 0.05,
+                        z: (Math.random() - 0.5) * 0.08
+                    });
+                }
+
+                pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const pMat = new THREE.PointsMaterial({
+                    color: colorHex,
+                    size: 0.15,
+                    transparent: true,
+                    opacity: 0.9
+                });
+
+                const particleSystem = new THREE.Points(pGeo, pMat);
+                this.scene.add(particleSystem);
+
+                this.particleSystems.push({
+                    mesh: particleSystem,
+                    velocities: velocities,
+                    life: 1.0 // 1.0 to 0.0
+                });
+            }
+
+            updateParticles(delta) {
+                for (let i = this.particleSystems.length - 1; i >= 0; i--) {
+                    const ps = this.particleSystems[i];
+                    ps.life -= delta * 1.8;
+
+                    if (ps.life <= 0) {
+                        this.scene.remove(ps.mesh);
+                        ps.mesh.geometry.dispose();
+                        ps.mesh.material.dispose();
+                        this.particleSystems.splice(i, 1);
+                        continue;
+                    }
+
+                    ps.mesh.material.opacity = ps.life;
+                    const posAttr = ps.mesh.geometry.attributes.position;
+                    for (let j = 0; j < posAttr.count; j++) {
+                        posAttr.setX(j, posAttr.getX(j) + ps.velocities[j].x);
+                        posAttr.setY(j, posAttr.getY(j) + ps.velocities[j].y);
+                        posAttr.setZ(j, posAttr.getZ(j) + ps.velocities[j].z);
+                    }
+                    posAttr.needsUpdate = true;
+                }
+            }
+
+            equipItem(item) {
+                this.equipped = item;
+                this.updateUI();
+                this.showToast(`손에 [${item.name}]을(를) 집었습니다.`);
+            }
+
+            clearEquipped() {
+                this.equipped = null;
+                this.updateUI();
+            }
+
+            toggleInventory() {
+                this.isInventoryOpen = !this.isInventoryOpen;
+                const modal = document.getElementById('inventory-modal');
+                if (this.isInventoryOpen) {
+                    this.renderInventoryUI();
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            toggleShop() {
+                this.isShopOpen = !this.isShopOpen;
+                const modal = document.getElementById('shop-modal');
+                if (this.isShopOpen) {
+                    this.renderShopUI();
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            toggleBackupModal() {
+                this.isBackupOpen = !this.isBackupOpen;
+                const modal = document.getElementById('backup-modal');
+                if (this.isBackupOpen) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            renderInventoryUI() {
+                // Render Tools
+                const toolsGrid = document.getElementById('tools-grid');
+                toolsGrid.innerHTML = `
+                    <div onclick="game.equipItem({type:'TOOL', id:'hoe', name:'농장 괭이', icon:'⛏️'})" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-2xl border border-slate-700 cursor-pointer flex items-center gap-3 transition">
+                        <span class="text-2xl">⛏️</span>
+                        <div>
+                            <div class="font-bold text-sm text-white">농장 괭이</div>
+                            <div class="text-xs text-slate-400">땅을 경작</div>
+                        </div>
+                    </div>
+                    <div onclick="game.equipItem({type:'TOOL', id:'waterCan', name:'물뿌리개', icon:'💧'})" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-2xl border border-slate-700 cursor-pointer flex items-center gap-3 transition">
+                        <span class="text-2xl">💧</span>
+                        <div>
+                            <div class="font-bold text-sm text-white">물뿌리개</div>
+                            <div class="text-xs text-slate-400">토양 수분 공급</div>
+                        </div>
+                    </div>
+                    <div onclick="game.equipItem({type:'FERTILIZER', id:'fertilizer', name:'속성 거름', icon:'💩'})" class="bg-slate-800 hover:bg-slate-700 p-3 rounded-2xl border border-slate-700 cursor-pointer flex items-center justify-between transition">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">💩</span>
+                            <div>
+                                <div class="font-bold text-sm text-white">속성 거름</div>
+                                <div class="text-xs text-emerald-400 font-semibold">성장 속도 2배</div>
+                            </div>
+                        </div>
+                        <span class="bg-slate-700 text-xs px-2 py-1 rounded-lg font-bold">${this.inventory.fertilizer}개</span>
+                    </div>
+                `;
+
+                // Render Seeds
+                const seedsGrid = document.getElementById('seeds-grid');
+                seedsGrid.innerHTML = '';
+                Object.keys(PLANT_TYPES).forEach(key => {
+                    const plant = PLANT_TYPES[key];
+                    const count = this.inventory.seeds[key] || 0;
+                    const card = document.createElement('div');
+                    card.className = `bg-slate-800 p-3 rounded-2xl border border-slate-700 flex items-center justify-between ${count > 0 ? 'hover:bg-slate-700 cursor-pointer' : 'opacity-50'} transition`;
+                    if (count > 0) {
+                        card.onclick = () => {
+                            this.equipItem({ type: 'SEED', id: key, name: `${plant.name} 씨앗`, icon: plant.icon });
+                            this.toggleInventory();
+                        };
+                    }
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">${plant.icon}</span>
+                            <div>
+                                <div class="font-bold text-sm text-white">${plant.name} 씨앗</div>
+                                <div class="text-xs text-slate-400">${plant.growthTime}초 소요</div>
+                            </div>
+                        </div>
+                        <span class="bg-slate-700 text-xs px-2.5 py-1 rounded-lg font-extrabold text-amber-300">${count}개</span>
+                    `;
+                    seedsGrid.appendChild(card);
+                });
+
+                // Render Harvested Crops
+                const cropsGrid = document.getElementById('crops-grid');
+                cropsGrid.innerHTML = '';
+                Object.keys(PLANT_TYPES).forEach(key => {
+                    const plant = PLANT_TYPES[key];
+                    const count = this.inventory.crops[key] || 0;
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-800 p-3 rounded-2xl border border-slate-700 flex items-center justify-between';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">${plant.icon}</span>
+                            <div>
+                                <div class="font-bold text-sm text-white">${plant.name}</div>
+                                <div class="text-xs text-amber-400 font-semibold">판매가: ${plant.sellPrice} 코인</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-slate-700 px-2 py-1 rounded-lg font-bold">${count}개</span>
+                            ${count > 0 ? `<button onclick="game.sellCrop('${key}')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg transition">판매</button>` : ''}
+                        </div>
+                    `;
+                    cropsGrid.appendChild(card);
+                });
+            }
+
+            renderShopUI() {
+                document.getElementById('shop-coin-display').innerText = this.coins;
+
+                // Shop Seeds
+                const seedsList = document.getElementById('shop-seeds-list');
+                seedsList.innerHTML = '';
+                Object.keys(PLANT_TYPES).forEach(key => {
+                    const plant = PLANT_TYPES[key];
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-800/80 p-4 rounded-2xl border border-slate-700 flex items-center justify-between';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">${plant.icon}</span>
+                            <div>
+                                <div class="font-bold text-white text-sm">${plant.name} 씨앗</div>
+                                <div class="text-xs text-slate-400 mt-0.5">${plant.description}</div>
+                                <div class="text-xs text-emerald-400 mt-1 font-semibold">수확 시: +${plant.sellPrice} 코인</div>
+                            </div>
+                        </div>
+                        <button onclick="game.buySeed('${key}')" class="bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition flex flex-col items-center gap-0.5 shadow-md">
+                            <span>구매</span>
+                            <span class="text-[10px] text-amber-200">🪙 ${plant.seedPrice}</span>
+                        </button>
+                    `;
+                    seedsList.appendChild(card);
+                });
+
+                // Shop Supplies
+                const suppliesList = document.getElementById('shop-supplies-list');
+                suppliesList.innerHTML = `
+                    <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl">💩</span>
+                            <div>
+                                <div class="font-bold text-white text-sm">속성 거름 (1개)</div>
+                                <div class="text-xs text-slate-400 mt-0.5">식물의 성장 속도를 즉시 대폭 증가시킵니다.</div>
+                            </div>
+                        </div>
+                        <button onclick="game.buyFertilizer()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition flex flex-col items-center gap-0.5 shadow-md">
+                            <span>구매</span>
+                            <span class="text-[10px] text-emerald-200">🪙 15</span>
+                        </button>
+                    </div>
+                `;
+            }
+
+            buySeed(seedKey) {
+                const plant = PLANT_TYPES[seedKey];
+                if (this.coins < plant.seedPrice) {
+                    this.showToast('❌ 코인이 부족합니다!');
+                    this.sound.playError();
+                    return;
+                }
+                this.coins -= plant.seedPrice;
+                this.inventory.seeds[seedKey] = (this.inventory.seeds[seedKey] || 0) + 1;
+                this.sound.playCoin();
+                this.showToast(`🛒 ${plant.name} 씨앗을 구매했습니다!`);
+                this.renderShopUI();
+                this.updateUI();
+            }
+
+            buyFertilizer() {
+                if (this.coins < 15) {
+                    this.showToast('❌ 코인이 부족합니다!');
+                    this.sound.playError();
+                    return;
+                }
+                this.coins -= 15;
+                this.inventory.fertilizer += 1;
+                this.sound.playCoin();
+                this.showToast('🛒 속성 거름을 구매했습니다!');
+                this.renderShopUI();
+                this.updateUI();
+            }
+
+            sellCrop(cropKey) {
+                const count = this.inventory.crops[cropKey] || 0;
+                if (count <= 0) return;
+
+                const plant = PLANT_TYPES[cropKey];
+                const totalGold = plant.sellPrice * count;
+
+                this.coins += totalGold;
+                this.inventory.crops[cropKey] = 0;
+
+                this.sound.playCoin();
+                this.showToast(`💰 ${plant.name} ${count}개를 모두 팔아 +${totalGold} 코인을 얻었습니다!`);
+                this.renderInventoryUI();
+                this.updateUI();
+            }
+
+            updateUI() {
+                document.getElementById('coin-display').innerText = this.coins;
+                document.getElementById('harvest-count').innerText = `${this.totalHarvested}개`;
+
+                // Update Equipped Slot Banner
+                const slotName = document.getElementById('equipped-name');
+                const slotIcon = document.getElementById('equipped-icon');
+                const slotDesc = document.getElementById('equipped-desc');
+
+                if (this.equipped) {
+                    slotName.innerText = this.equipped.name;
+                    slotIcon.innerText = this.equipped.icon;
+                    if (this.equipped.type === 'SEED') slotDesc.innerText = '밭을 클릭하여 씨앗을 심습니다.';
+                    else if (this.equipped.id === 'hoe') slotDesc.innerText = '밭을 갈아 일굽니다.';
+                    else if (this.equipped.id === 'waterCan') slotDesc.innerText = '토양에 물을 줍니다.';
+                    else if (this.equipped.id === 'fertilizer') slotDesc.innerText = '식물에 거름을 주어 성장을 촉진합니다.';
+                } else {
+                    slotName.innerText = '손 (빈손)';
+                    slotIcon.innerText = '🌾';
+                    slotDesc.innerText = '밭을 클릭하여 수확하거나 상호작용합니다.';
+                }
+            }
+
+            showToast(msg) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'bg-slate-900/90 border border-slate-700 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-bold transition transform translate-x-full duration-300 ease-out';
+                toast.innerText = msg;
+                container.appendChild(toast);
+
+                setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-x-full');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            spawnFloatingText(text, worldX, worldZ, color = '#ffffff') {
+                const screenPos = new THREE.Vector3(worldX, 1.2, worldZ);
+                screenPos.project(this.camera);
+
+                const x = (screenPos.x * .5 + .5) * window.innerWidth;
+                const y = (-(screenPos.y * .5) + .5) * window.innerHeight;
+
+                const elem = document.createElement('div');
+                elem.className = 'float-text';
+                elem.style.left = `${x}px`;
+                elem.style.top = `${y}px`;
+                elem.style.color = color;
+                elem.innerText = text;
+
+                document.body.appendChild(elem);
+                setTimeout(() => elem.remove(), 1200);
+            }
+
+            getSaveData() {
+                return JSON.stringify({
+                    coins: this.coins,
+                    totalHarvested: this.totalHarvested,
+                    inventory: this.inventory,
+                    plots: this.plots.map(p => ({
+                        id: p.id,
+                        isTilled: p.isTilled,
+                        moisture: p.moisture,
+                        fertilized: p.fertilized,
+                        plant: p.plant
+                    }))
+                });
+            }
+
+            saveToLocalStorage(silent = false) {
+                try {
+                    localStorage.setItem('3d_farm_save_data', this.getSaveData());
+                    if (!silent) this.showToast('💾 게임이 성공적으로 저장되었습니다!');
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+
+            loadFromLocalStorage() {
+                try {
+                    const raw = localStorage.getItem('3d_farm_save_data');
+                    if (!raw) return;
+                    const data = JSON.parse(raw);
+
+                    this.coins = data.coins || 100;
+                    this.totalHarvested = data.totalHarvested || 0;
+                    if (data.inventory) this.inventory = data.inventory;
+
+                    if (data.plots && Array.isArray(data.plots)) {
+                        data.plots.forEach((pSave, idx) => {
+                            if (this.plots[idx]) {
+                                this.plots[idx].isTilled = pSave.isTilled;
+                                this.plots[idx].moisture = pSave.moisture || 0;
+                                this.plots[idx].fertilized = pSave.fertilized || false;
+                                this.plots[idx].plant = pSave.plant || null;
+                                this.renderPlot(idx);
+                            }
+                        });
+                    }
+                    this.updateUI();
+                } catch(e) {
+                    console.error("Save load failed", e);
+                }
+            }
+
+            exportSaveJSON() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(this.getSaveData());
+                const dlAnchorElem = document.createElement('a');
+                dlAnchorElem.setAttribute("href", dataStr);
+                dlAnchorElem.setAttribute("download", `3D_Farm_Backup_${new Date().toISOString().slice(0,10)}.json`);
+                document.body.appendChild(dlAnchorElem);
+                dlAnchorElem.click();
+                dlAnchorElem.remove();
+                this.showToast('📥 백업 JSON 파일 다운로드 완료!');
+            }
+
+            importSaveJSON(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        localStorage.setItem('3d_farm_save_data', JSON.stringify(data));
+                        this.loadFromLocalStorage();
+                        this.showToast('📤 백업 파일 로드 성공!');
+                        this.toggleBackupModal();
+                    } catch(err) {
+                        this.showToast('❌ 잘못된 백업 파일 형식입니다.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            resetData() {
+                if (confirm('정말로 모든 게임 데이터를 초기화하시겠습니까?')) {
+                    localStorage.removeItem('3d_farm_save_data');
+                    window.location.reload();
+                }
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const delta = 0.016; // approx 60fps delta
+
+                // Rotate Windmill Blades
+                if (this.millBlades) {
+                    this.millBlades.rotation.z += delta * 1.2;
+                }
+
+                // Update Systems
+                this.updatePlayer(delta);
+                this.updateRaycast();
+                this.updatePlants(delta);
+                this.updateParticles(delta);
+
+                // Render Three.js Scene
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        let game = null;
+        window.onload = () => {
+            game = new FarmGame();
+        };
+    </script>
+</body>
+</html>
