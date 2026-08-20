@@ -678,10 +678,10 @@
     if (!State.isPlaying) return;
     const moveDist = 0.016; // 대략적인 60fps 시간 델타
     const isNight = (State.envMode === 'night' || State.envMode === 'sunset');
-    
+
     // 차선 오프셋 계산 (도로의 정중앙 0기준으로 우측/좌측 차선)
     // 도로 폭(ROAD_WIDTH)이 32이므로 중앙에서 양쪽으로 약 8만큼 떨어지게 설정
-    const rightLaneOffset = ROAD_WIDTH * 0.25; 
+    const rightLaneOffset = ROAD_WIDTH * 0.25;
     const leftLaneOffset = -ROAD_WIDTH * 0.25;
 
     npcCars.forEach(npc => {
@@ -694,28 +694,28 @@
         npc.isVertical = Math.random() > 0.5;
         const isRightLane = Math.random() > 0.5;
         npc.laneOffset = isRightLane ? rightLaneOffset : leftLaneOffset;
-        
+
         // 도로의 위치는 블록의 경계선(0, BLOCK_SIZE, 2*BLOCK_SIZE ...)에 위치함
         // 따라서 도로 중심선 좌표는 bx * BLOCK_SIZE 가 됨.
-        
+
         if (npc.isVertical) {
           // Z축으로 길게 뻗은 세로 방향 도로 (X좌표가 고정)
           // X좌표: 해당 블록의 도로 중심선(bx * BLOCK_SIZE) + 차선 오프셋
           npc.x = bx * BLOCK_SIZE + npc.laneOffset;
-          
+
           // Z좌표: 플레이어 기준 해당 블록 어딘가 무작위
           npc.z = bz * BLOCK_SIZE + (Math.random() * BLOCK_SIZE - BLOCK_SIZE/2);
-          
+
           // 방향: 우측 통행(양수 오프셋)이면 -Z방향, 좌측 통행(음수 오프셋)이면 +Z방향으로 직진하도록 각도 설정
-          npc.angle = isRightLane ? Math.PI : 0; 
+          npc.angle = isRightLane ? Math.PI : 0;
         } else {
           // X축으로 길게 뻗은 가로 방향 도로 (Z좌표가 고정)
           // Z좌표: 해당 블록의 도로 중심선(bz * BLOCK_SIZE) + 차선 오프셋 (차선은 이제 도로의 상하)
           npc.z = bz * BLOCK_SIZE + npc.laneOffset;
-          
+
           // X좌표: 해당 블록 어딘가 무작위
           npc.x = bx * BLOCK_SIZE + (Math.random() * BLOCK_SIZE - BLOCK_SIZE/2);
-          
+
           // 방향: 우측 통행(아래쪽 차선)이면 -X방향, 좌측 통행(위쪽 차선)이면 +X방향
           // 우측 차선(Z값이 양수 오프셋)일때 각도 -PI/2 (우측), 좌측 차선일때 PI/2 (좌측)
           npc.angle = isRightLane ? -Math.PI / 2 : Math.PI / 2;
@@ -1047,7 +1047,7 @@
     ctx.fillStyle = '#38bdf8';
     ctx.shadowBlur = 8;
     ctx.shadowColor = '#38bdf8';
-    
+
     // 우측(3시 방향)을 향하는 뾰족한 삼각형
     ctx.beginPath();
     ctx.moveTo(6, 0);  // 뾰족한 앞부분 (Right)
@@ -1178,7 +1178,7 @@ if (batteryCanBoost) {
   } else {
     State.isBoosting = true;
   }
-
+z
   camera.fov = THREE.MathUtils.lerp(
     camera.fov,
     78,
@@ -1221,6 +1221,7 @@ if (State.battery > 0) {
   if (Input.forward) {
     State.speed += currentAccel;
     State.gear = 'D';
+    State.battery -= 0.005;
 
   } else if (Input.backward) {
     State.speed -= currentAccel * 0.8;
@@ -1308,7 +1309,7 @@ if (State.battery > 0) {
       // Y축 상승 효과 적용
       carGroup.position.set(State.posX, State.posY, State.posZ);
       carGroup.rotation.y = State.angle;
-      
+
       // 보도블럭 위에서는 차체가 덜컹거리는 효과 추가
       if (onSidewalk && Math.abs(State.speed) > 10) {
         carGroup.rotation.x = Math.sin(Date.now() * 0.05) * 0.01;
