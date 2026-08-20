@@ -469,7 +469,7 @@
     <a href="#easy" class="pill-btn">쉬움</a>
     <a href="#security" class="pill-btn">보안</a>
     <!-- <a href="#download" class="download-pill-btn">DaniTools 다운로드 ↓</a> -->
-    <a class="download-pill-btn">2026/09/10일 오픈!</a>
+    <a href="#download" class="download-pill-btn">2026/09/15일 오픈!</a>
   </div>
 
   <div class="hero-wrapper">
@@ -485,7 +485,7 @@
         </nav>
       </div>
       <!-- <a href="#download" class="btn-header">DaniTools 다운로드</a> -->
-      <a class="btn-header">2026/09/10일 오픈 예정</a>
+      <a class="btn-header">2026/09/15일 오픈 예정</a>
     </header>
 
     <main class="hero">
@@ -494,7 +494,7 @@
         <!-- <a href="#download" class="download-btn">
           DaniTools 다운로드 <span>↓</span>
         </a> -->
-        <a  class="download-btn">
+        <a href="#download" class="download-btn">
           2026/09/10일 오픈 예정
         </a>
         <p class="os-info">Windows 10 이상</p>
@@ -613,7 +613,7 @@
     <section class="cta-section fade-in-section">
       <h2>지금 바로 DaniTools로<br>일하는 방식을 바꿔보세요</h2>
       <p>무료로 다운로드하고 복잡했던 작업들을 순식간에 해결하세요.</p>
-      <a href="#" class="cta-btn">지금 시작하기</a>
+      <a href="#" class="cta-btn" id="timer"></a>
     </section>
   </div>
 
@@ -657,6 +657,26 @@
       const fadeElements = document.querySelectorAll(".fade-in-section");
       fadeElements.forEach(el => observer.observe(el));
     });
+
+    // 1. 목표 날짜 설정 (원하는 날짜와 시간으로 변경하세요)
+    const targetDate = new Date("September 15, 2026 09:20:00").getTime();
+
+    // 2. 1초마다 실시간으로 반복 실행
+    const countdownTimer = setInterval(function() {
+
+      const now = new Date().getTime(); // 현재 시간
+      const difference = targetDate - now; // 남은 시간 (밀리초)
+
+      // 3. 일, 시간, 분, 초 단위 계산
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      // 4. 화면에 실시간으로 출력
+      document.getElementById("timer").innerHTML =
+              days + "일 " + hours + "시간 " + minutes + "분 " + seconds + "초 남음";
+    }, 1000); // 1000밀리초 = 1초 주기로 실행
   </script>
 
 </body>
