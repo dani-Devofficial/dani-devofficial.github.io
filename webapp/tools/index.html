@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DaniTools - 작업 효율을 극대화하는 심플하고 강력한 툴</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #fafafa;
+      color: #111;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Hero Background Wrapper */
+    .hero-wrapper {
+      background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 50%, #e0f2fe 100%);
+      padding-bottom: 0px;
+    }
+
+    /* Standard Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 60px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      transition: opacity 0.3s ease;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #000;
+      text-decoration: none;
+    }
+
+    nav {
+      display: flex;
+      gap: 24px;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #555;
+      font-size: 15px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: #000;
+    }
+
+    .btn-header {
+      background-color: #dbeafe;
+      color: #2563eb;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-header:hover {
+      background-color: #bfdbfe;
+      transform: translateY(-1px);
+    }
+
+    /* Floating Navigation Pill Bar (Scroll Mode) */
+    .floating-nav {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 40px;
+      padding: 6px 8px 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      z-index: 1000;
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    }
+
+    .floating-nav.active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .pill-btn {
+      padding: 8px 18px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .pill-btn:hover {
+      background-color: rgba(241, 245, 249, 0.8);
+      color: #0f172a;
+    }
+
+    .pill-btn.active-tab {
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .download-pill-btn {
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 8px;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .download-pill-btn:hover {
+      background-color: #1e293b;
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 60px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .hero-text-box {
+      margin-bottom: 50px;
+    }
+
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -1.5px;
+      margin-bottom: 32px;
+      color: #0f172a;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #0f172a;
+      color: #fff;
+      padding: 16px 36px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+    }
+
+    .download-btn:hover {
+      background-color: #1e293b;
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.25);
+    }
+
+    .os-info {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    /* Graphic Preview */
+    .preview-container {
+      width: 100%;
+      max-width: 1000px;
+      height: 380px;
+      background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 24px 24px 0 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 -10px 40px rgba(59, 130, 246, 0.25);
+      margin: 0 auto;
+    }
+
+    .window-mockup {
+      width: 85%;
+      height: 100%;
+      margin: 36px auto 0;
+      background: #ffffff;
+      border-radius: 12px 12px 0 0;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .window-header {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .red { background: #ef4444; }
+    .yellow { background: #f59e0b; }
+    .green { background: #10b981; }
+
+    .mockup-content {
+      flex: 1;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px dashed #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Scroll Animation */
+    .fade-in-section {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+      will-change: opacity, transform;
+    }
+
+    .fade-in-section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Sections Shared Styling */
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 120px 24px;
+    }
+
+    .section-title-area {
+      text-align: center;
+      margin-bottom: 70px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background-color: #e0f2fe;
+      color: #0284c7;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    .section-title {
+      font-size: 40px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.3;
+      letter-spacing: -1px;
+    }
+
+    .section-desc {
+      font-size: 18px;
+      color: #64748b;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    /* Grid Layouts */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .feature-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 40px 32px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+    }
+
+    .icon-box {
+      width: 56px;
+      height: 56px;
+      background: #eff6ff;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 24px;
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    /* Lab & Workflow Sections */
+    .lab-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .lab-info h3 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 16px;
+    }
+
+    .lab-info p {
+      font-size: 16px;
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .lab-preview {
+      background: #f1f5f9;
+      height: 240px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    /* CTA Section */
+    .cta-section {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      border-radius: 32px;
+      padding: 80px 40px;
+      text-align: center;
+      margin: 40px auto 120px;
+      max-width: 1200px;
+    }
+
+    .cta-section h2 {
+      font-size: 38px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+
+    .cta-section p {
+      font-size: 18px;
+      color: #94a3b8;
+      margin-bottom: 36px;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: #2563eb;
+      color: #ffffff;
+      padding: 16px 40px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .cta-btn:hover {
+      background-color: #1d4ed8;
+      transform: translateY(-2px);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid #e2e8f0;
+      padding: 40px 24px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .lab-box { grid-template-columns: 1fr; }
+      header nav { display: none; }
+      .floating-nav nav { display: flex; }
+      .hero h1 { font-size: 36px; }
+      .section-title { font-size: 28px; }
+      .cta-section h2 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Nav (Appears on Scroll) -->
+  <div class="floating-nav" id="floatingNav">
+    <a href="#speed" class="pill-btn">가벼움</a>
+    <a href="#power" class="pill-btn">강력함</a>
+    <a href="#easy" class="pill-btn">쉬움</a>
+    <a href="#security" class="pill-btn">보안</a>
+    <!-- <a href="#download" class="download-pill-btn">DaniTools 다운로드 ↓</a> -->
+    <a class="download-pill-btn">2026/09/10일 오픈!</a>
+  </div>
+
+  <div class="hero-wrapper">
+    <!-- Standard Header -->
+    <header id="mainHeader">
+      <div class="header-left">
+        <a href="#" class="logo">DaniTools</a>
+        <nav>
+          <a href="#speed">가벼움</a>
+          <a href="#power">강력함</a>
+          <a href="#easy">쉬움</a>
+          <a href="#security">보안</a>
+        </nav>
+      </div>
+      <!-- <a href="#download" class="btn-header">DaniTools 다운로드</a> -->
+      <a class="btn-header">2026/09/10일 오픈 예정</a>
+    </header>
+
+    <main class="hero">
+      <div class="hero-text-box fade-in-section">
+        <h1>작업 효율을 극대화하는<br>심플하고 강력한 툴</h1>
+        <!-- <a href="#download" class="download-btn">
+          DaniTools 다운로드 <span>↓</span>
+        </a> -->
+        <a  class="download-btn">
+          2026/09/10일 오픈 예정
+        </a>
+        <p class="os-info">Windows 10 이상</p>
+      </div>
+
+      <div class="preview-container fade-in-section">
+        <div class="window-mockup">
+          <div class="window-header">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+          </div>
+          <div class="mockup-content">
+            DaniTools 실행 화면 예시
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Section 1: 가벼움 -->
+  <section id="speed" class="section-container">
+    <div class="section-title-area fade-in-section">
+      <span class="badge">SPEED</span>
+      <h2 class="section-title">가벼움</h2>
+      <p class="section-desc">불필요한 자원 낭비 대신, 빠른 성능으로 작업 효율을 극대화합니다.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card fade-in-section">
+        <div class="icon-box">⚡</div>
+        <h3>경량성</h3>
+        <p>디스크를 많이 차지하지 않습니다.</p>
+      </div>
+      <div class="feature-card fade-in-section">
+        <div class="icon-box">⚡</div>
+        <h3>순수함</h3>
+        <p>React, Vue.js등의 외부 프레임워크를 불러오지 않습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Power -->
+  <section id="power" class="section-container">
+    <div class="section-title-area fade-in-section">
+      <span class="badge">강력함</span>
+      <h2 class="section-title">많은 유틸리티들이 앱 한개에 포함</h2>
+      <p class="section-desc">다양한 앱으로 효율이 상승합니다</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card fade-in-section">
+        <div class="icon-box">📱</div>
+        <h3>다양한 앱</h3>
+        <p>QR 코드 생성기, 메모, 타이머 등의 많은 앱이 있습니다.</p>
+      </div>
+
+      <div class="feature-card fade-in-section">
+        <div class="icon-box">📂</div>
+        <h3>성능 최적화</h3>
+        <p>앱이 매우 빠르게 반응합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Customization (개인화) -->
+  <section id="custom" class="section-container">
+    <div class="section-title-area fade-in-section">
+      <span class="badge">EASY</span>
+      <h2 class="section-title">쉽게. 더 쉽게.</h2>
+      <p class="section-desc">컴퓨터를 잘 못하거나 익숙하지 않다도 사용 가능합니다.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card fade-in-section">
+        <div class="icon-box">🛠️</div>
+        <h3>Search Bar</h3>
+        <p>스페이스를 두번만 하면 검색과 앱 검색이 가능합니다.</p>
+      </div>
+
+      <div class="feature-card fade-in-section">
+        <div class="icon-box">🎨</div>
+        <h3>창 방식</h3>
+        <p>우리가 이미 사용하는 운영체제처럼 창 방식입니다.</p>
+      </div>
+
+      <div class="feature-card fade-in-section">
+        <div class="icon-box">🧩</div>
+        <h3>심플함</h3>
+        <p>복잡하지 않아 빠르게 사용할 수 있습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Security (보안) -->
+  <section id="security" class="section-container">
+    <div class="section-title-area fade-in-section">
+      <span class="badge">SECURITY</span>
+      <h2 class="section-title">강력한 보안과 완벽한 프라이버시</h2>
+      <p class="section-desc">모든 데이터는 기기 내에 암호화되어 안전하게 보호됩니다.</p>
+    </div>
+
+    <div class="lab-box fade-in-section">
+      <div class="lab-info">
+        <h3>로컬 기반 데이터 암호화</h3>
+        <p>DaniTools는 사용자의 소중한 정보와 데이터 작업 이력을 클라우드로 무단 전송하지 않으며, 오직 사용자의 로컬 환경에서만 안전하게 저장 및 처리됩니다.</p>
+      </div>
+      <div class="lab-preview">
+        [ Local Encryption Active ]
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner Section -->
+  <div id="download" class="section-container">
+    <section class="cta-section fade-in-section">
+      <h2>지금 바로 DaniTools로<br>일하는 방식을 바꿔보세요</h2>
+      <p>무료로 다운로드하고 복잡했던 작업들을 순식간에 해결하세요.</p>
+      <a href="#" class="cta-btn">지금 시작하기</a>
+    </section>
+  </div>
+
+  <footer>
+    <p>© 2026 DaniTools. All rights reserved.</p>
+  </footer>
+
+  <!-- Interactive Scripts -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const floatingNav = document.getElementById("floatingNav");
+      const mainHeader = document.getElementById("mainHeader");
+
+      // Scroll threshold for Floating Nav
+      window.addEventListener("scroll", function () {
+        if (window.scrollY > 250) {
+          floatingNav.classList.add("active");
+          mainHeader.style.opacity = "0";
+        } else {
+          floatingNav.classList.remove("active");
+          mainHeader.style.opacity = "1";
+        }
+      });
+
+      // Fade-in Animation on Scroll
+      const observerOptions = {
+        root: null,
+        rootMargin: "0px",
+        threshold: 0.15
+      };
+
+      const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      const fadeElements = document.querySelectorAll(".fade-in-section");
+      fadeElements.forEach(el => observer.observe(el));
+    });
+  </script>
+
+</body>
+</html>
