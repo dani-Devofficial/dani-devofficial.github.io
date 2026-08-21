@@ -1135,6 +1135,11 @@
       return;
     }
 
+    // 회생제동 충전
+if (!Input.forward && Math.abs(State.speed) > 5) {
+  State.battery = Math.min(100, State.battery + (Input.backward ? 0.03 : 0.015));
+}
+
     // Check if on sidewalk (보도블럭 위 확인)
     let onSidewalk = false;
     for (let sa of sidewalkAreas) {
@@ -1221,7 +1226,7 @@ if (State.battery > 0) {
   if (Input.forward) {
     State.speed += currentAccel;
     State.gear = 'D';
-    State.battery -= 0.005;
+    State.battery -= 0.009;
 
   } else if (Input.backward) {
     State.speed -= currentAccel * 0.8;
