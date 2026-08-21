@@ -1226,7 +1226,7 @@ if (State.battery > 0) {
   if (Input.forward) {
     State.speed += currentAccel;
     State.gear = 'D';
-    State.battery -= 0.009;
+    State.battery -= 0.05;
 
   } else if (Input.backward) {
     State.speed -= currentAccel * 0.8;
