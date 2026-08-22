@@ -1174,7 +1174,7 @@ if (batteryCanBoost) {
   currentAccel *= 1.65;
 
   // 부스트 배터리 소모
-  State.battery -= 0.13;
+  State.battery -= 0.05;
 
   // 배터리가 0 이하가 되는 즉시 강제 종료
   if (State.battery <= 0) {
@@ -1226,7 +1226,7 @@ if (State.battery > 0) {
   if (Input.forward) {
     State.speed += currentAccel;
     State.gear = 'D';
-    State.battery -= 0.03;
+    State.battery -= 0.02;
 
   } else if (Input.backward) {
     State.speed -= currentAccel * 0.8;
