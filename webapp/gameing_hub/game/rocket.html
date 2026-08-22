@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 로켓 시뮬레이터 (3D Rocket Simulator)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Noto+Sans+KR:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+        
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        /* Glassmorphic UI elements */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Custom Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        /* Nav & HUD Animations */
+        .hud-value {
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative overflow-hidden select-none">
+
+    <!-- 3D Canvas Wrapper -->
+    <div id="canvas-container" class="absolute inset-0 w-full h-full z-0"></div>
+
+    <!-- Initial Launch Settings Modal (설정 창) -->
+    <div id="setup-modal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all duration-500">
+        <div class="glass-panel w-full max-w-xl rounded-2xl p-6 md:p-8 shadow-2xl border border-cyan-500/30 flex flex-col gap-6">
+            <div class="text-center">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-cyan-500/20 text-cyan-400 mb-3 border border-cyan-500/40">
+                    <i class="fa-solid fa-rocket text-2xl"></i>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-white font-orbitron tracking-wide">ROCKET SIMULATOR</h1>
+                <p class="text-xs md:text-sm text-cyan-300/70 mt-1">로켓 제원 및 환경 설정을 완료하고 시뮬레이션을 시작하세요</p>
+            </div>
+
+            <div class="space-y-5">
+                <!-- 1. Rocket Length Setting -->
+                <div class="glass-card p-4 rounded-xl border border-slate-700/50">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-ruler-vertical text-cyan-400"></i> 로켓 총 길이 (Length)
+                        </label>
+                        <span id="length-val-display" class="font-orbitron font-bold text-cyan-400 text-lg">35 m</span>
+                    </div>
+                    <input type="range" id="rocket-length" min="10" max="80" value="35" class="w-full">
+                    <div class="flex justify-between text-xs text-slate-400 mt-1 font-mono">
+                        <span>10m (소형)</span>
+                        <span>45m (중형)</span>
+                        <span>80m (대형)</span>
+                    </div>
+                </div>
+
+                <!-- 2. Map Selection -->
+                <div>
+                    <label class="text-sm font-semibold text-slate-200 mb-2 block flex items-center gap-2">
+                        <i class="fa-solid fa-earth-americas text-cyan-400"></i> 지형 / 맵 선택 (Terrain Map)
+                    </label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" class="map-option-btn glass-card p-3 rounded-xl flex flex-col items-center gap-2 border-2 border-cyan-500 bg-cyan-500/20 text-white transition-all" data-map="flat">
+                            <i class="fa-solid fa-vector-square text-xl text-emerald-400"></i>
+                            <span class="text-xs font-bold">평지 (Flat)</span>
+                        </button>
+                        <button type="button" class="map-option-btn glass-card p-3 rounded-xl flex flex-col items-center gap-2 border-2 border-slate-700 hover:border-slate-500 text-slate-300 transition-all" data-map="mountain">
+                            <i class="fa-solid fa-mountain text-xl text-amber-400"></i>
+                            <span class="text-xs font-bold">산악 (Mountain)</span>
+                        </button>
+                        <button type="button" class="map-option-btn glass-card p-3 rounded-xl flex flex-col items-center gap-2 border-2 border-slate-700 hover:border-slate-500 text-slate-300 transition-all" data-map="sea">
+                            <i class="fa-solid fa-ship text-xl text-blue-400"></i>
+                            <span class="text-xs font-bold">바다 (Drone Ship)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Wind Speed Selection -->
+                <div>
+                    <label class="text-sm font-semibold text-slate-200 mb-2 block flex items-center gap-2">
+                        <i class="fa-solid fa-wind text-cyan-400"></i> 바람 / 풍속 (Wind Intensity)
+                    </label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" class="wind-option-btn glass-card p-2.5 rounded-xl text-center border-2 border-slate-700 hover:border-slate-500 text-slate-300 transition-all" data-wind="high">
+                            <div class="text-xs font-bold text-red-400">강 (Strong)</div>
+                            <div class="text-[10px] text-slate-400 font-mono mt-0.5">15~22 m/s</div>
+                        </button>
+                        <button type="button" class="wind-option-btn glass-card p-2.5 rounded-xl text-center border-2 border-cyan-500 bg-cyan-500/20 text-white transition-all" data-wind="med">
+                            <div class="text-xs font-bold text-amber-400">약 (Weak)</div>
+                            <div class="text-[10px] text-slate-400 font-mono mt-0.5">6~10 m/s</div>
+                        </button>
+                        <button type="button" class="wind-option-btn glass-card p-2.5 rounded-xl text-center border-2 border-slate-700 hover:border-slate-500 text-slate-300 transition-all" data-wind="low">
+                            <div class="text-xs font-bold text-emerald-400">하 (Calm)</div>
+                            <div class="text-[10px] text-slate-400 font-mono mt-0.5">1~3 m/s</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-sim-btn" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold text-base tracking-wider uppercase shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> 시뮬레이션 Launch Start
+            </button>
+        </div>
+    </div>
+
+    <!-- Flight HUD Overlay (게임 실행 중 화면) -->
+    <div id="hud-overlay" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6 opacity-0 transition-opacity duration-500">
+        <!-- Top HUD Bar -->
+        <div class="flex justify-between items-start gap-4">
+            <!-- Left Info Panel -->
+            <div class="glass-panel p-4 rounded-xl flex flex-col gap-2 min-w-[180px] md:min-w-[220px]">
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-1.5">
+                    <span class="text-xs text-slate-400 font-medium">고도 (ALT)</span>
+                    <span id="hud-altitude" class="font-orbitron font-bold text-lg md:text-xl text-cyan-400 hud-value">0.0 m</span>
+                </div>
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-1.5">
+                    <span class="text-xs text-slate-400 font-medium">수직속도 (V.SPD)</span>
+                    <span id="hud-vspeed" class="font-orbitron font-bold text-sm md:text-base text-emerald-400">0.0 m/s</span>
+                </div>
+                <div class="flex items-center justify-between border-b border-slate-700/60 pb-1.5">
+                    <span class="text-xs text-slate-400 font-medium">수평속도 (H.SPD)</span>
+                    <span id="hud-hspeed" class="font-orbitron font-bold text-sm md:text-base text-purple-400">0.0 m/s</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-medium">기울기 (TILT)</span>
+                    <span id="hud-tilt" class="font-orbitron font-bold text-sm md:text-base text-amber-400">0.0°</span>
+                </div>
+            </div>
+
+            <!-- Center Target Distance / Wind Widget -->
+            <div class="glass-panel px-4 py-3 rounded-xl flex items-center gap-4 text-center">
+                <div>
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider">목표 지점거리</div>
+                    <div id="hud-target-dist" class="font-orbitron font-bold text-cyan-300 text-sm md:text-base">150.0 m</div>
+                </div>
+                <div class="w-px h-8 bg-slate-700"></div>
+                <div>
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-wind text-cyan-400"></i> 바람속도
+                    </div>
+                    <div id="hud-wind-speed" class="font-orbitron font-bold text-amber-300 text-sm md:text-base">8.5 m/s</div>
+                </div>
+                <div class="w-px h-8 bg-slate-700"></div>
+                <div>
+                    <div class="text-[10px] text-emerald-400 uppercase tracking-wider font-bold flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-compass"></i> SAS 자이로
+                    </div>
+                    <div class="font-orbitron font-bold text-emerald-300 text-xs md:text-sm">수직 보정 ON</div>
+                </div>
+            </div>
+
+            <!-- Right System Panel -->
+            <div class="glass-panel p-4 rounded-xl flex flex-col gap-3 min-w-[180px] pointer-events-auto">
+                <div>
+                    <div class="flex justify-between text-xs mb-1 font-semibold">
+                        <span class="text-slate-300"><i class="fa-solid fa-gas-pump text-amber-400 mr-1"></i>연료 (FUEL)</span>
+                        <span id="hud-fuel-pct" class="font-orbitron text-amber-400">100%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                        <div id="hud-fuel-bar" class="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-200" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs mb-1 font-semibold">
+                        <span class="text-slate-300"><i class="fa-solid fa-fire text-orange-500 mr-1"></i>추력 (THRUST)</span>
+                        <span id="hud-thrust-pct" class="font-orbitron text-orange-400">0%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                        <div id="hud-thrust-bar" class="h-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-100" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-1">
+                    <button id="cam-view-btn" class="flex-1 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-cyan-300 border border-slate-600 transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-camera"></i> <span id="cam-name">추적</span>
+                    </button>
+                    <button id="settings-reopen-btn" class="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-slate-300 border border-slate-600 transition-all">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Touch & Keyboard Controls -->
+        <div class="flex justify-between items-end gap-4 pointer-events-auto">
+            <!-- Left Thrust Slider (Mobile/Touch Friendly) -->
+            <div class="glass-panel p-3 rounded-2xl flex flex-col items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">추력 슬라이더</span>
+                <div class="h-32 flex items-center">
+                    <input type="range" id="throttle-slider" min="0" max="100" value="0" step="1" class="h-28 -rotate-90 origin-center cursor-pointer">
+                </div>
+                <button id="cut-engine-btn" class="px-3 py-1 bg-red-600/80 hover:bg-red-500 text-[11px] font-bold text-white rounded-lg transition-all">
+                    ENGINE CUT
+                </button>
+            </div>
+
+            <!-- Center Controls Hint -->
+            <div class="hidden md:flex glass-panel px-5 py-2.5 rounded-xl items-center gap-6 text-xs text-slate-300">
+                <div class="flex items-center gap-2"><kbd class="px-2 py-1 bg-slate-800 rounded border border-slate-600 font-mono text-cyan-400">Shift/Ctrl</kbd> 추력 조절</div>
+                <div class="flex items-center gap-2"><kbd class="px-2 py-1 bg-slate-800 rounded border border-slate-600 font-mono text-cyan-400">W/S</kbd> Pitch (기울임)</div>
+                <div class="flex items-center gap-2"><kbd class="px-2 py-1 bg-slate-800 rounded border border-slate-600 font-mono text-cyan-400">A/D</kbd> Yaw (회전)</div>
+                <div class="flex items-center gap-2"><kbd class="px-2 py-1 bg-slate-800 rounded border border-slate-600 font-mono text-cyan-400">R</kbd> 리셋</div>
+            </div>
+
+            <!-- Right Attitude RCS Pad (Touch) -->
+            <div class="glass-panel p-3 rounded-2xl flex flex-col items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">RCS 방향 제어</span>
+                <div class="grid grid-cols-3 gap-1.5 w-28 h-28">
+                    <div></div>
+                    <button id="rcs-up" class="bg-slate-800 active:bg-cyan-500/50 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 text-xs">▲</button>
+                    <div></div>
+                    <button id="rcs-left" class="bg-slate-800 active:bg-cyan-500/50 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 text-xs">◀</button>
+                    <div class="bg-slate-900/60 rounded-lg flex items-center justify-center text-[10px] text-slate-500 font-mono">RCS</div>
+                    <button id="rcs-right" class="bg-slate-800 active:bg-cyan-500/50 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 text-xs">▶</button>
+                    <div></div>
+                    <button id="rcs-down" class="bg-slate-800 active:bg-cyan-500/50 border border-slate-700 rounded-lg flex items-center justify-center text-slate-200 text-xs">▼</button>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mission Result Overlay (성공/폭발 알림) -->
+    <div id="result-overlay" class="absolute inset-0 z-40 hidden flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 text-center flex flex-col items-center gap-4 border border-slate-700 shadow-2xl">
+            <div id="result-icon-box" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl">
+                <i id="result-icon" class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 id="result-title" class="text-2xl font-black font-orbitron tracking-wide text-white">LANDING SUCCESS</h2>
+            <p id="result-desc" class="text-sm text-slate-300">목표 이착륙 패드에 안전하게 착륙했습니다!</p>
+            
+            <div class="w-full glass-card p-3 rounded-xl grid grid-cols-2 gap-2 text-xs font-mono text-left my-1">
+                <div class="text-slate-400">착륙 수직 속도:</div>
+                <div id="res-vspeed" class="text-right font-bold text-emerald-400">1.2 m/s</div>
+                <div class="text-slate-400">착륙 기울기:</div>
+                <div id="res-tilt" class="text-right font-bold text-amber-400">2.1°</div>
+                <div class="text-slate-400">남은 연료:</div>
+                <div id="res-fuel" class="text-right font-bold text-cyan-400">34%</div>
+            </div>
+
+            <button id="retry-btn" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/30">
+                <i class="fa-solid fa-rotate-right mr-1"></i> 다시 시도하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // Global Simulation Configuration & State
+        // ==========================================
+        const CONFIG = {
+            rocketLength: 35, // meters
+            mapType: 'flat',   // 'flat', 'mountain', 'sea'
+            windType: 'med'    // 'high', 'med', 'low'
+        };
+
+        const WIND_VALUES = {
+            high: { speed: 18, label: '강 (Strong)' },
+            med: { speed: 8, label: '약 (Weak)' },
+            low: { speed: 2, label: '하 (Calm)' }
+        };
+
+        let scene, camera, renderer, controls;
+        let rocketGroup, exhaustParticles, rcsParticles, explosionParticles;
+        let groundMesh, landingPadMesh, launchPadMesh, waterMesh;
+        let oceanUniforms;
+
+        // Physics State
+        let physics = {
+            pos: new THREE.Vector3(0, 0, 0),
+            vel: new THREE.Vector3(0, 0, 0),
+            rot: new THREE.Euler(0, 0, 0, 'YXZ'), // Pitch(x), Yaw(y), Roll(z)
+            rotVel: new THREE.Vector3(0, 0, 0),
+            throttle: 0, // 0 to 1
+            fuel: 100,  // %
+            mass: 25000, // kg
+            maxThrust: 650000, // N
+            windVec: new THREE.Vector3(0, 0, 0),
+            isGrounded: true,
+            isCrashed: false,
+            isLanded: false,
+            isStarted: false,
+            hasLiftedOff: false
+        };
+
+        let cameraMode = 0; // 0: Chase, 1: Landing Pad View, 2: Rocket Front, 3: Orbit Free
+        const cameraModes = ['추적', '패드 시점', '노즈캠', '자유 Orbit'];
+
+        let keys = {};
+        let rcsInput = { pitch: 0, yaw: 0 };
+        let clock = new THREE.Clock();
+
+        // Target Pad Position
+        let targetPadPos = new THREE.Vector3(120, 0, 120);
+
+        // UI Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            initUI();
+            initThree();
+            animate();
+        });
+
+        function initUI() {
+            // Rocket Length Slider
+            const lenSlider = document.getElementById('rocket-length');
+            const lenDisplay = document.getElementById('length-val-display');
+            lenSlider.addEventListener('input', (e) => {
+                CONFIG.rocketLength = parseFloat(e.target.value);
+                lenDisplay.textContent = `${CONFIG.rocketLength} m`;
+            });
+
+            // Map Option Buttons
+            document.querySelectorAll('.map-option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.map-option-btn').forEach(b => {
+                        b.classList.remove('border-cyan-500', 'bg-cyan-500/20', 'text-white');
+                        b.classList.add('border-slate-700', 'text-slate-300');
+                    });
+                    btn.classList.remove('border-slate-700', 'text-slate-300');
+                    btn.classList.add('border-cyan-500', 'bg-cyan-500/20', 'text-white');
+                    CONFIG.mapType = btn.dataset.map;
+                });
+            });
+
+            // Wind Option Buttons
+            document.querySelectorAll('.wind-option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.wind-option-btn').forEach(b => {
+                        b.classList.remove('border-cyan-500', 'bg-cyan-500/20', 'text-white');
+                        b.classList.add('border-slate-700', 'text-slate-300');
+                    });
+                    btn.classList.remove('border-slate-700', 'text-slate-300');
+                    btn.classList.add('border-cyan-500', 'bg-cyan-500/20', 'text-white');
+                    CONFIG.windType = btn.dataset.wind;
+                });
+            });
+
+            // Start Simulation Button
+            document.getElementById('start-sim-btn').addEventListener('click', () => {
+                document.getElementById('setup-modal').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('hud-overlay').classList.remove('opacity-0');
+                resetSimulation();
+            });
+
+            // Re-open settings
+            document.getElementById('settings-reopen-btn').addEventListener('click', () => {
+                document.getElementById('setup-modal').classList.remove('opacity-0', 'pointer-events-none');
+            });
+
+            // Camera toggle
+            document.getElementById('cam-view-btn').addEventListener('click', () => {
+                cameraMode = (cameraMode + 1) % cameraModes.length;
+                document.getElementById('cam-name').textContent = cameraModes[cameraMode];
+            });
+
+            // Throttle slider
+            const throttleInput = document.getElementById('throttle-slider');
+            throttleInput.addEventListener('input', (e) => {
+                physics.throttle = parseFloat(e.target.value) / 100;
+            });
+
+            document.getElementById('cut-engine-btn').addEventListener('click', () => {
+                throttleInput.value = 0;
+                physics.throttle = 0;
+            });
+
+            // RCS Buttons
+            setupRCSButton('rcs-up', 'pitch', 1);
+            setupRCSButton('rcs-down', 'pitch', -1);
+            setupRCSButton('rcs-left', 'yaw', -1);
+            setupRCSButton('rcs-right', 'yaw', 1);
+
+            // Retry Button
+            document.getElementById('retry-btn').addEventListener('click', () => {
+                document.getElementById('result-overlay').classList.add('hidden');
+                resetSimulation();
+            });
+
+            // Keyboard listeners
+            window.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+                if (e.key.toLowerCase() === 'r') resetSimulation();
+            });
+            window.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function setupRCSButton(id, axis, val) {
+            const btn = document.getElementById(id);
+            const startHandler = (e) => { e.preventDefault(); rcsInput[axis] = val; };
+            const endHandler = (e) => { e.preventDefault(); rcsInput[axis] = 0; };
+            btn.addEventListener('mousedown', startHandler);
+            btn.addEventListener('mouseup', endHandler);
+            btn.addEventListener('mouseleave', endHandler);
+            btn.addEventListener('touchstart', startHandler);
+            btn.addEventListener('touchend', endHandler);
+        }
+
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0e17);
+            scene.fog = new THREE.FogExp2(0x0a0e17, 0.0012);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.5, 5000);
+            camera.position.set(0, 20, 50);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Orbit Controls for free view
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 + 0.02;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfff5ea, 1.2);
+            sunLight.position.set(200, 400, 150);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 10;
+            sunLight.shadow.camera.far = 1000;
+            const d = 250;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            scene.add(sunLight);
+
+            // Create Starfield sky background
+            createStarfield();
+        }
+
+        function createStarfield() {
+            const starGeo = new THREE.BufferGeometry();
+            const count = 2000;
+            const positions = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 3000;
+                positions[i + 1] = Math.random() * 1500 + 100;
+                positions[i + 2] = (Math.random() - 0.5) * 3000;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2, transparent: true, opacity: 0.8 });
+            const starField = new THREE.Points(starGeo, starMat);
+            scene.add(starField);
+        }
+
+        function buildEnvironment() {
+            // Remove previous environment objects if any
+            if (groundMesh) scene.remove(groundMesh);
+            if (landingPadMesh) scene.remove(landingPadMesh);
+            if (launchPadMesh) scene.remove(launchPadMesh);
+            if (waterMesh) scene.remove(waterMesh);
+
+            // Set Target Landing Pad position depending on Map Selection
+            if (CONFIG.mapType === 'sea') {
+                targetPadPos.set(160, 2.5, 160);
+            } else if (CONFIG.mapType === 'mountain') {
+                targetPadPos.set(120, 0, 120);
+            } else {
+                targetPadPos.set(140, 0, 140);
+            }
+
+            // Launch Pad at origin (0, 0, 0)
+            createLaunchPad();
+
+            // Ground & Map Type Specific Generation
+            if (CONFIG.mapType === 'flat') {
+                // Flat Grass Terrain
+                const geo = new THREE.PlaneGeometry(2000, 2000, 64, 64);
+                geo.rotateX(-Math.PI / 2);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9, metalness: 0.1 });
+                groundMesh = new THREE.Mesh(geo, mat);
+                groundMesh.receiveShadow = true;
+                scene.add(groundMesh);
+
+                // Grid helper
+                const grid = new THREE.GridHelper(2000, 100, 0x38bdf8, 0x334155);
+                grid.position.y = 0.1;
+                scene.add(grid);
+
+                // Landing Target Pad
+                createLandingPad(targetPadPos.x, targetPadPos.y, targetPadPos.z, false);
+
+            } else if (CONFIG.mapType === 'mountain') {
+                // Procedural Mountain Terrain
+                const geo = new THREE.PlaneGeometry(2000, 2000, 120, 120);
+                geo.rotateX(-Math.PI / 2);
+                const pos = geo.attributes.position;
+                for (let i = 0; i < pos.count; i++) {
+                    const x = pos.getX(i);
+                    const z = pos.getZ(i);
+                    // Keep launch & landing pad areas flat
+                    const distLaunch = Math.hypot(x, z);
+                    const distLand = Math.hypot(x - targetPadPos.x, z - targetPadPos.z);
+                    if (distLaunch > 80 && distLand > 60) {
+                        const h = Math.sin(x * 0.015) * Math.cos(z * 0.015) * 45 + Math.sin(x * 0.005) * 80;
+                        pos.setY(i, Math.max(0, h));
+                    }
+                }
+                geo.computeVertexNormals();
+                const mat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, flatShading: true });
+                groundMesh = new THREE.Mesh(geo, mat);
+                groundMesh.receiveShadow = true;
+                scene.add(groundMesh);
+
+                createLandingPad(targetPadPos.x, targetPadPos.y, targetPadPos.z, false);
+
+            } else if (CONFIG.mapType === 'sea') {
+                // Sea Water Plane
+                const seaGeo = new THREE.PlaneGeometry(2500, 2500, 64, 64);
+                seaGeo.rotateX(-Math.PI / 2);
+                const seaMat = new THREE.MeshStandardMaterial({
+                    color: 0x0284c7,
+                    roughness: 0.2,
+                    metalness: 0.8,
+                    transparent: true,
+                    opacity: 0.85
+                });
+                waterMesh = new THREE.Mesh(seaGeo, seaMat);
+                waterMesh.position.y = -0.5;
+                scene.add(waterMesh);
+
+                // Coastal Launch Land Base
+                const baseGeo = new THREE.CylinderGeometry(40, 45, 10, 32);
+                const baseMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+                const coastBase = new THREE.Mesh(baseGeo, baseMat);
+                coastBase.position.set(0, -4, 0);
+                scene.add(coastBase);
+
+                // Autonomous Drone Ship (Barge) floating on sea
+                createDroneShip(targetPadPos.x, targetPadPos.z);
+            }
+        }
+
+        function createLaunchPad() {
+            launchPadMesh = new THREE.Group();
+
+            // Main Concrete Launch Ring
+            const ringGeo = new THREE.CylinderGeometry(20, 22, 1.5, 32);
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.y = 0.75;
+            ring.receiveShadow = true;
+            launchPadMesh.add(ring);
+
+            // Red & Yellow Markings
+            const innerRingGeo = new THREE.RingGeometry(8, 16, 32);
+            innerRingGeo.rotateX(-Math.PI / 2);
+            const innerRingMat = new THREE.MeshBasicMaterial({ color: 0xeab308, side: THREE.DoubleSide });
+            const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat);
+            innerRing.position.y = 1.52;
+            launchPadMesh.add(innerRing);
+
+            // Launch Tower Support Structure
+            const towerGeo = new THREE.BoxGeometry(6, CONFIG.rocketLength * 1.1, 6);
+            const towerMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.5 });
+            const tower = new THREE.Mesh(towerGeo, towerMat);
+            tower.position.set(-18, CONFIG.rocketLength * 0.55, 0);
+            tower.castShadow = true;
+            launchPadMesh.add(tower);
+
+            scene.add(launchPadMesh);
+        }
+
+        function createLandingPad(x, y, z, isShip = false) {
+            landingPadMesh = new THREE.Group();
+            landingPadMesh.position.set(x, y, z);
+
+            const radius = 18;
+            const padGeo = new THREE.CylinderGeometry(radius, radius + 2, 1.2, 32);
+            const padMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+            const pad = new THREE.Mesh(padGeo, padMat);
+            pad.position.y = 0.6;
+            pad.receiveShadow = true;
+            landingPadMesh.add(pad);
+
+            // Giant Yellow 'X' Target Marking
+            const xGroup = new THREE.Group();
+            const barGeo = new THREE.BoxGeometry(22, 0.1, 3.5);
+            const barMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+            const bar1 = new THREE.Mesh(barGeo, barMat);
+            bar1.rotation.y = Math.PI / 4;
+            const bar2 = new THREE.Mesh(barGeo, barMat);
+            bar2.rotation.y = -Math.PI / 4;
+            xGroup.add(bar1, bar2);
+            xGroup.position.y = 1.22;
+            landingPadMesh.add(xGroup);
+
+            // Outer Ring Beacon Lights
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const lightGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.8, 12);
+                const lightMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+                const beacon = new THREE.Mesh(lightGeo, lightMat);
+                beacon.position.set(Math.cos(angle) * (radius - 1.5), 1.3, Math.sin(angle) * (radius - 1.5));
+                landingPadMesh.add(beacon);
+
+                // Point Light
+                const pLight = new THREE.PointLight(0x38bdf8, 0.8, 15);
+                pLight.position.set(beacon.position.x, 2, beacon.position.z);
+                landingPadMesh.add(pLight);
+            }
+
+            scene.add(landingPadMesh);
+        }
+
+        function createDroneShip(x, z) {
+            landingPadMesh = new THREE.Group();
+            landingPadMesh.position.set(x, 0, z);
+
+            // Barge Hull Body
+            const shipGeo = new THREE.BoxGeometry(45, 4, 85);
+            const shipMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, metalness: 0.7 });
+            const ship = new THREE.Mesh(shipGeo, shipMat);
+            ship.position.y = 2;
+            ship.castShadow = true;
+            ship.receiveShadow = true;
+            landingPadMesh.add(ship);
+
+            // Landing Deck 'X' Marking
+            const deckX = new THREE.Group();
+            const barGeo = new THREE.BoxGeometry(28, 0.1, 4);
+            const barMat = new THREE.MeshBasicMaterial({ color: 0xf39c12 });
+            const b1 = new THREE.Mesh(barGeo, barMat);
+            b1.rotation.y = Math.PI / 4;
+            const b2 = new THREE.Mesh(barGeo, barMat);
+            b2.rotation.y = -Math.PI / 4;
+            deckX.add(b1, b2);
+            deckX.position.y = 4.06;
+            landingPadMesh.add(deckX);
+
+            // Autonomous Thruster Pods on corners
+            const podMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.8 });
+            [[-20, 38], [20, 38], [-20, -38], [20, -38]].forEach(([px, pz]) => {
+                const pod = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 3, 16), podMat);
+                pod.position.set(px, 2, pz);
+                landingPadMesh.add(pod);
+            });
+
+            scene.add(landingPadMesh);
+        }
+
+        function createRocket(lengthMeters) {
+            if (rocketGroup) scene.remove(rocketGroup);
+
+            rocketGroup = new THREE.Group();
+
+            const radius = lengthMeters * 0.055; // Aspect ratio
+            const bodyHeight = lengthMeters * 0.75;
+            const noseHeight = lengthMeters * 0.2;
+            const nozzleHeight = lengthMeters * 0.05;
+
+            // Main Body Cylinder
+            const bodyGeo = new THREE.CylinderGeometry(radius, radius, bodyHeight, 32);
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: 0xf8fafc,
+                roughness: 0.3,
+                metalness: 0.6
+            });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = nozzleHeight + bodyHeight / 2;
+            body.castShadow = true;
+            rocketGroup.add(body);
+
+            // Black Accent Stripe & Logo
+            const stripeGeo = new THREE.CylinderGeometry(radius + 0.02, radius + 0.02, bodyHeight * 0.15, 32);
+            const stripeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4 });
+            const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+            stripe.position.y = body.position.y + bodyHeight * 0.2;
+            rocketGroup.add(stripe);
+
+            // Nose Cone
+            const noseGeo = new THREE.ConeGeometry(radius, noseHeight, 32);
+            const noseMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2, metalness: 0.7 });
+            const nose = new THREE.Mesh(noseGeo, noseMat);
+            nose.position.y = body.position.y + bodyHeight / 2 + noseHeight / 2;
+            nose.castShadow = true;
+            rocketGroup.add(nose);
+
+            // Main Engine Nozzle
+            const nozzleGeo = new THREE.CylinderGeometry(radius * 0.4, radius * 0.7, nozzleHeight, 24, 1, true);
+            const nozzleMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.2, side: THREE.DoubleSide });
+            const nozzle = new THREE.Mesh(nozzleGeo, nozzleMat);
+            nozzle.position.y = nozzleHeight / 2;
+            rocketGroup.add(nozzle);
+
+            // Grid Fins / Aerodynamic Fins (4x)
+            for (let i = 0; i < 4; i++) {
+                const angle = (i * Math.PI) / 2;
+                const finGeo = new THREE.BoxGeometry(radius * 0.8, bodyHeight * 0.12, 0.2);
+                const finMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
+                const fin = new THREE.Mesh(finGeo, finMat);
+                fin.position.set(Math.cos(angle) * (radius + radius * 0.3), body.position.y - bodyHeight * 0.35, Math.sin(angle) * (radius + radius * 0.3));
+                fin.rotation.y = -angle;
+                rocketGroup.add(fin);
+            }
+
+            // Engine Plume Particle System Initialization
+            createExhaustParticleSystem(radius, lengthMeters);
+
+            scene.add(rocketGroup);
+        }
+
+        function createExhaustParticleSystem(radius, lengthMeters) {
+            const pCount = 300;
+            const pGeo = new THREE.BufferGeometry();
+            const pPos = new Float32Array(pCount * 3);
+            const pSizes = new Float32Array(pCount);
+
+            for (let i = 0; i < pCount; i++) {
+                pPos[i * 3] = (Math.random() - 0.5) * radius;
+                pPos[i * 3 + 1] = -Math.random() * lengthMeters * 0.5;
+                pPos[i * 3 + 2] = (Math.random() - 0.5) * radius;
+                pSizes[i] = Math.random() * 2 + 1;
+            }
+
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+
+            const pMat = new THREE.PointsMaterial({
+                color: 0xff6600,
+                size: radius * 0.8,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+
+            exhaustParticles = new THREE.Points(pGeo, pMat);
+            exhaustParticles.visible = false;
+            rocketGroup.add(exhaustParticles);
+        }
+
+        function createExplosionEffect(pos) {
+            const count = 400;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const velocities = [];
+
+            for (let i = 0; i < count; i++) {
+                positions[i * 3] = pos.x;
+                positions[i * 3 + 1] = pos.y + 2;
+                positions[i * 3 + 2] = pos.z;
+
+                velocities.push(new THREE.Vector3(
+                    (Math.random() - 0.5) * 40,
+                    Math.random() * 35 + 5,
+                    (Math.random() - 0.5) * 40
+                ));
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({
+                color: 0xef4444,
+                size: 3,
+                transparent: true,
+                opacity: 1,
+                blending: THREE.AdditiveBlending
+            });
+
+            explosionParticles = new THREE.Points(geo, mat);
+            explosionParticles.userData = { velocities, life: 1.0 };
+            scene.add(explosionParticles);
+        }
+
+        function resetSimulation() {
+            // Re-build environment & rocket with configured length
+            buildEnvironment();
+            createRocket(CONFIG.rocketLength);
+
+            const launchY = CONFIG.mapType === 'sea' ? 2.5 : 0.0;
+
+            // Reset Physics
+            physics.pos.set(0, launchY, 0);
+            physics.vel.set(0, 0, 0);
+            physics.rot.set(0, 0, 0);
+            physics.rotVel.set(0, 0, 0);
+            physics.throttle = 0;
+            physics.fuel = 100;
+            physics.mass = CONFIG.rocketLength * 800; // Scaling mass with length
+            physics.maxThrust = physics.mass * 24;      // ~2.4G max acceleration
+            physics.isGrounded = true;
+            physics.isCrashed = false;
+            physics.isLanded = false;
+            physics.isStarted = true;
+            physics.hasLiftedOff = false;
+
+            // Reset Wind
+            const wBase = WIND_VALUES[CONFIG.windType].speed;
+            const angle = Math.random() * Math.PI * 2;
+            physics.windVec.set(Math.cos(angle) * wBase, 0, Math.sin(angle) * wBase);
+
+            // Reset UI
+            document.getElementById('throttle-slider').value = 0;
+            document.getElementById('hud-thrust-bar').style.width = '0%';
+            document.getElementById('hud-fuel-bar').style.width = '100%';
+
+            if (rocketGroup) {
+                rocketGroup.position.copy(physics.pos);
+                rocketGroup.rotation.copy(physics.rot);
+                rocketGroup.visible = true;
+            }
+
+            if (explosionParticles) {
+                scene.remove(explosionParticles);
+                explosionParticles = null;
+            }
+        }
+
+        function updatePhysics(dt) {
+            if (!physics.isStarted || physics.isCrashed || physics.isLanded) return;
+
+            // 1. Throttle & Fuel Management
+            if (physics.throttle > 0 && physics.fuel > 0) {
+                physics.fuel -= physics.throttle * dt * 2.2; // Fuel consumption rate
+                if (physics.fuel <= 0) {
+                    physics.fuel = 0;
+                    physics.throttle = 0;
+                    document.getElementById('throttle-slider').value = 0;
+                }
+            } else {
+                physics.throttle = 0;
+            }
+
+            // 2. Keyboard Control handling for Attitude RCS & Pitch
+            if (keys['w'] || keys['arrowup']) rcsInput.pitch = 1;
+            else if (keys['s'] || keys['arrowdown']) rcsInput.pitch = -1;
+
+            if (keys['a'] || keys['arrowleft']) rcsInput.yaw = -1;
+            else if (keys['d'] || keys['arrowright']) rcsInput.yaw = 1;
+
+            if (keys['shift']) {
+                physics.throttle = Math.min(1, physics.throttle + dt * 0.8);
+                document.getElementById('throttle-slider').value = physics.throttle * 100;
+            } else if (keys['control']) {
+                physics.throttle = Math.max(0, physics.throttle - dt * 0.8);
+                document.getElementById('throttle-slider').value = physics.throttle * 100;
+            }
+
+            // 3. Torque & Angular Velocity
+            const rcsTorque = 1.2;
+            physics.rotVel.x += rcsInput.pitch * rcsTorque * dt;
+            physics.rotVel.y += rcsInput.yaw * rcsTorque * dt;
+            
+            // 자동 수직 복원 시스템 (Auto-Upright Gyro Stabilization)
+            // 수동 RCS 조종 키를 누르고 있지 않을 때는 무조건 로켓이 하늘(0도)을 향하도록 자이로 복원력 작용
+            if (rcsInput.pitch === 0) {
+                physics.rotVel.x += (-physics.rot.x * 8.0 - physics.rotVel.x * 4.0) * dt;
+            }
+            if (rcsInput.yaw === 0) {
+                physics.rotVel.z += (-physics.rot.z * 8.0 - physics.rotVel.z * 4.0) * dt;
+            }
+
+            // Angular Damping
+            physics.rotVel.multiplyScalar(0.90);
+            physics.rot.x += physics.rotVel.x * dt;
+            physics.rot.y += physics.rotVel.y * dt;
+            physics.rot.z += physics.rotVel.z * dt;
+
+            // Calculate Up Vector based on Rocket Rotation
+            const thrustDir = new THREE.Vector3(0, 1, 0).applyEuler(physics.rot);
+
+            // 4. Force Accumulation
+            const totalForce = new THREE.Vector3(0, 0, 0);
+
+            // Gravity Force
+            const gravityForce = new THREE.Vector3(0, -9.81 * physics.mass, 0);
+            totalForce.add(gravityForce);
+
+            // Rocket Engine Thrust Force
+            const currentThrust = physics.throttle * physics.maxThrust;
+            const thrustForce = thrustDir.clone().multiplyScalar(currentThrust);
+            totalForce.add(thrustForce);
+
+            // Wind Force (측풍에 의해 약간 밀리지만 로켓 자체는 기울어지지 않고 직립 유지)
+            const altFactor = Math.max(0.1, 1.0 - physics.pos.y / 2000);
+            const windForce = physics.windVec.clone().multiplyScalar(15 * altFactor * (CONFIG.rocketLength / 35));
+            totalForce.add(windForce);
+
+            // Air Drag
+            const dragForce = physics.vel.clone().multiplyScalar(-0.5 * physics.vel.length());
+            totalForce.add(dragForce);
+
+            // Acceleration & Velocity Update
+            const accel = totalForce.divideScalar(physics.mass);
+            physics.vel.add(accel.multiplyScalar(dt));
+
+            // Position Update
+            physics.pos.add(physics.vel.clone().multiplyScalar(dt));
+
+            // 5. Landing / Ground Collision Detection
+            const groundY = CONFIG.mapType === 'sea' ? 2.5 : 0.0;
+            
+            if (!physics.hasLiftedOff) {
+                // Rocket is resting on launch pad until it gains altitude
+                if (physics.pos.y > groundY + 0.5) {
+                    physics.hasLiftedOff = true;
+                } else {
+                    if (physics.vel.y < 0) physics.vel.y = 0;
+                    physics.pos.y = groundY;
+                }
+            } else if (physics.pos.y <= groundY) {
+                physics.pos.y = groundY;
+                checkLandingCondition();
+            }
+
+            // Update 3D Rocket Group transform
+            rocketGroup.position.copy(physics.pos);
+            rocketGroup.rotation.copy(physics.rot);
+
+            // Update Engine Plume FX
+            if (exhaustParticles) {
+                exhaustParticles.visible = physics.throttle > 0.05 && physics.fuel > 0;
+                if (exhaustParticles.visible) {
+                    exhaustParticles.scale.set(1, 1 + physics.throttle * 2, 1);
+                }
+            }
+        }
+
+        function checkLandingCondition() {
+            const vSpeed = Math.abs(physics.vel.y);
+            const hSpeed = Math.hypot(physics.vel.x, physics.vel.z);
+            const tiltDeg = Math.abs(physics.rot.x) * (180 / Math.PI);
+
+            // Distance to Landing Target Center
+            const distToTarget = Math.hypot(physics.pos.x - targetPadPos.x, physics.pos.z - targetPadPos.z);
+
+            // Touchdown criteria: Soft landing if vertical speed < 6 m/s, tilt < 15°, within landing area
+            const safeVSpeed = vSpeed < 6.5;
+            const safeHSpeed = hSpeed < 4.0;
+            const safeTilt = tiltDeg < 16.0;
+            const onTargetPad = distToTarget < 22.0;
+
+            if (safeVSpeed && safeHSpeed && safeTilt && onTargetPad) {
+                // Successful Landing!
+                physics.isLanded = true;
+                physics.vel.set(0, 0, 0);
+                showMissionResult(true, `목표 이착륙 패드에 성공적으로 Soft Landing 했습니다! (오차: ${distToTarget.toFixed(1)}m)`);
+            } else {
+                // Crash Landing!
+                physics.isCrashed = true;
+                if (rocketGroup) rocketGroup.visible = false;
+                createExplosionEffect(physics.pos);
+                
+                let reason = "착륙 충격이 너무 강했습니다!";
+                if (!onTargetPad) reason = "착륙 목표 패드를 벗어났습니다!";
+                else if (!safeTilt) reason = "로켓 기울기가 너무 컸습니다!";
+
+                showMissionResult(false, reason);
+            }
+        }
+
+        function showMissionResult(success, desc) {
+            const overlay = document.getElementById('result-overlay');
+            const iconBox = document.getElementById('result-icon-box');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const descEl = document.getElementById('result-desc');
+
+            if (success) {
+                iconBox.className = "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+                icon.className = "fa-solid fa-trophy";
+                title.textContent = "LANDING SUCCESS";
+                title.className = "text-2xl font-black font-orbitron tracking-wide text-emerald-400";
+            } else {
+                iconBox.className = "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-red-500/20 text-red-400 border border-red-500/40";
+                icon.className = "fa-solid fa-explosion";
+                title.textContent = "MISSION FAILED";
+                title.className = "text-2xl font-black font-orbitron tracking-wide text-red-400";
+            }
+
+            descEl.textContent = desc;
+            document.getElementById('res-vspeed').textContent = `${Math.abs(physics.vel.y).toFixed(1)} m/s`;
+            document.getElementById('res-tilt').textContent = `${(Math.abs(physics.rot.x) * (180 / Math.PI)).toFixed(1)}°`;
+            document.getElementById('res-fuel').textContent = `${Math.round(physics.fuel)}%`;
+
+            overlay.classList.remove('hidden');
+        }
+
+        function updateCamera() {
+            if (!rocketGroup) return;
+
+            if (cameraMode === 0) {
+                // Chase Cam (Smoothly follows behind & above rocket)
+                const offset = new THREE.Vector3(0, CONFIG.rocketLength * 0.6, CONFIG.rocketLength * 2.2);
+                offset.applyEuler(physics.rot);
+                const targetCamPos = physics.pos.clone().add(offset);
+                camera.position.lerp(targetCamPos, 0.1);
+                camera.lookAt(physics.pos.clone().add(new THREE.Vector3(0, CONFIG.rocketLength * 0.4, 0)));
+            } else if (cameraMode === 1) {
+                // Landing Pad Observer View
+                camera.position.set(targetPadPos.x + 35, targetPadPos.y + 12, targetPadPos.z + 35);
+                camera.lookAt(physics.pos);
+            } else if (cameraMode === 2) {
+                // Nose Cam (Looking down from rocket tip)
+                const nosePos = physics.pos.clone().add(new THREE.Vector3(0, CONFIG.rocketLength, 0).applyEuler(physics.rot));
+                camera.position.copy(nosePos);
+                camera.lookAt(physics.pos.clone().add(new THREE.Vector3(0, -50, 0)));
+            } else {
+                // Orbit Free Cam
+                controls.target.copy(physics.pos);
+                controls.update();
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-altitude').textContent = `${physics.pos.y.toFixed(1)} m`;
+            document.getElementById('hud-vspeed').textContent = `${physics.vel.y.toFixed(1)} m/s`;
+            const hSpeed = Math.hypot(physics.vel.x, physics.vel.z);
+            document.getElementById('hud-hspeed').textContent = `${hSpeed.toFixed(1)} m/s`;
+            
+            const tiltDeg = Math.abs(physics.rot.x) * (180 / Math.PI);
+            document.getElementById('hud-tilt').textContent = `${tiltDeg.toFixed(1)}°`;
+
+            const targetDist = Math.hypot(physics.pos.x - targetPadPos.x, physics.pos.z - targetPadPos.z);
+            document.getElementById('hud-target-dist').textContent = `${targetDist.toFixed(1)} m`;
+
+            document.getElementById('hud-wind-speed').textContent = `${WIND_VALUES[CONFIG.windType].speed} m/s`;
+
+            // Throttle & Fuel bars
+            document.getElementById('hud-thrust-pct').textContent = `${Math.round(physics.throttle * 100)}%`;
+            document.getElementById('hud-thrust-bar').style.width = `${physics.throttle * 100}%`;
+
+            document.getElementById('hud-fuel-pct').textContent = `${Math.round(physics.fuel)}%`;
+            document.getElementById('hud-fuel-bar').style.width = `${physics.fuel}%`;
+        }
+
+        function animateExplosion(dt) {
+            if (!explosionParticles) return;
+            const positions = explosionParticles.geometry.attributes.position.array;
+            const vels = explosionParticles.userData.velocities;
+
+            for (let i = 0; i < vels.length; i++) {
+                positions[i * 3] += vels[i].x * dt;
+                positions[i * 3 + 1] += vels[i].y * dt;
+                positions[i * 3 + 2] += vels[i].z * dt;
+
+                vels[i].y -= 9.8 * dt; // Gravity on debris
+            }
+            explosionParticles.geometry.attributes.position.needsUpdate = true;
+            explosionParticles.userData.life -= dt * 0.5;
+            explosionParticles.material.opacity = Math.max(0, explosionParticles.userData.life);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min(clock.getDelta(), 0.1);
+
+            updatePhysics(dt);
+            updateCamera();
+            updateHUD();
+
+            if (explosionParticles) animateExplosion(dt);
+
+            // Water animation
+            if (waterMesh) {
+                waterMesh.rotation.z = Math.sin(clock.getElapsedTime() * 0.5) * 0.005;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>
