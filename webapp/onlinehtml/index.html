@@ -53,11 +53,6 @@
       font-weight: 600;
     }
 
-    .run {
-      background: #2563eb;
-      color: white;
-    }
-
     .clear {
       background: #374151;
       color: white;
@@ -144,7 +139,6 @@
     <h1>HTML Online Viewer</h1>
 
     <div class="buttons">
-      <button class="run" onclick="runHTML()">▶ 실행</button>
       <button class="clear" onclick="clearEditor()">지우기</button>
       <button class="download" onclick="downloadHTML()">다운로드</button>
     </div>
@@ -212,16 +206,7 @@
 
     // HTML 실행
     function runHTML() {
-    const newTab = window.open("about:blank", "_blank");
-
-    if (!newTab) {
-        alert("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
-        return;
-    }
-
-    newTab.document.open();
-    newTab.document.write(editor.value);
-    newTab.document.close();
+    preview.srcdoc = editor.value;
     }
 
     // 에디터 내용 삭제
