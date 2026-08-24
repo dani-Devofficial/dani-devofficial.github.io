@@ -3,14 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>HTML Online Viewer</title>
+
+  <!-- Prism.js CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css"
+  >
 
   <style>
     * {
       box-sizing: border-box;
     }
 
-    html, body {
+    html,
+    body {
       margin: 0;
       width: 100%;
       height: 100%;
@@ -24,14 +32,22 @@
       flex-direction: column;
     }
 
+    /* =========================
+       Header
+    ========================= */
+
     header {
       height: 60px;
       padding: 0 20px;
+
       display: flex;
       align-items: center;
       justify-content: space-between;
+
       background: #111827;
       color: white;
+
+      flex-shrink: 0;
     }
 
     header h1 {
@@ -47,10 +63,17 @@
     button {
       border: 0;
       border-radius: 6px;
+
       padding: 8px 14px;
+
       cursor: pointer;
+
       font-size: 14px;
       font-weight: 600;
+    }
+
+    button:hover {
+      opacity: 0.9;
     }
 
     .clear {
@@ -63,62 +86,237 @@
       color: white;
     }
 
+    /* =========================
+       Main
+    ========================= */
+
     main {
       flex: 1;
+
       display: grid;
       grid-template-columns: 1fr 1fr;
+
       min-height: 0;
     }
 
     .panel {
       display: flex;
       flex-direction: column;
+
       min-width: 0;
+      min-height: 0;
     }
 
     .panel-title {
       height: 40px;
+
       display: flex;
       align-items: center;
+
       padding: 0 14px;
+
       background: #e5e7eb;
       border-bottom: 1px solid #d1d5db;
+
       font-weight: bold;
       font-size: 14px;
+
+      flex-shrink: 0;
     }
 
-    #editor {
+    /* =========================
+       Code Editor
+    ========================= */
+
+    .editor-container {
+      position: relative;
+
       flex: 1;
-      width: 100%;
-      resize: none;
-      border: 0;
-      outline: 0;
-      padding: 16px;
+
+      min-height: 0;
+
+      overflow: hidden;
+
       background: #1e293b;
-      color: #e2e8f0;
+    }
+
+    /*
+      실제 코드 색상 표시 영역
+    */
+    #highlight {
+      position: absolute;
+
+      top: 0;
+      left: 0;
+
+      width: 100%;
+      height: 100%;
+
+      margin: 0;
+      padding: 16px;
+
+      overflow: auto;
+
+      background: #1e293b;
+
       font-family: Consolas, Monaco, monospace;
       font-size: 14px;
       line-height: 1.6;
+
       tab-size: 2;
+
+      white-space: pre;
+
+      pointer-events: none;
     }
+
+    #highlight code {
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    /*
+      실제 입력창
+      글자는 투명하게 하고
+      커서만 흰색으로 표시
+    */
+    #editor {
+      position: absolute;
+
+      top: 0;
+      left: 0;
+
+      width: 100%;
+      height: 100%;
+
+      padding: 16px;
+
+      border: 0;
+      outline: 0;
+      resize: none;
+
+      background: transparent;
+
+      color: transparent;
+      caret-color: white;
+
+      font-family: Consolas, Monaco, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+
+      tab-size: 2;
+
+      white-space: pre;
+
+      overflow: auto;
+
+      z-index: 2;
+
+      /*
+        선택 영역은 보이도록
+      */
+      ::selection {
+        background: rgba(59, 130, 246, 0.35);
+      }
+    }
+
+    /* =========================
+       Preview
+    ========================= */
 
     .preview-wrapper {
       flex: 1;
+
+      min-height: 0;
+
       background: white;
+
       overflow: hidden;
     }
 
     #preview {
       width: 100%;
       height: 100%;
+
       border: 0;
+
       background: white;
     }
 
+    /* =========================
+       Prism 색상 커스터마이징
+    ========================= */
+
+    .token.comment,
+    .token.prolog,
+    .token.doctype,
+    .token.cdata {
+      color: #6a9955;
+    }
+
+    .token.punctuation {
+      color: #d4d4d4;
+    }
+
+    .token.tag {
+      color: #569cd6;
+    }
+
+    .token.attr-name {
+      color: #9cdcfe;
+    }
+
+    .token.attr-value,
+    .token.string {
+      color: #ce9178;
+    }
+
+    .token.keyword {
+      color: #c586c0;
+    }
+
+    .token.function {
+      color: #dcdcaa;
+    }
+
+    .token.number {
+      color: #b5cea8;
+    }
+
+    .token.boolean {
+      color: #569cd6;
+    }
+
+    .token.operator {
+      color: #d4d4d4;
+    }
+
+    .token.selector {
+      color: #d7ba7d;
+    }
+
+    .token.property {
+      color: #9cdcfe;
+    }
+
+    .token.important {
+      color: #c586c0;
+    }
+
+    /* =========================
+       Mobile
+    ========================= */
+
     @media (max-width: 768px) {
+
       main {
         grid-template-columns: 1fr;
         grid-template-rows: 50% 50%;
+      }
+
+      header {
+        padding: 0 12px;
       }
 
       header h1 {
@@ -129,36 +327,84 @@
         padding: 7px 9px;
         font-size: 12px;
       }
+
+      .panel-title {
+        height: 36px;
+      }
     }
   </style>
 </head>
 
 <body>
 
+  <!-- =========================
+       Header
+  ========================= -->
+
   <header>
+
     <h1>HTML Online Viewer</h1>
 
     <div class="buttons">
-      <button class="clear" onclick="clearEditor()">지우기</button>
-      <button class="download" onclick="downloadHTML()">다운로드</button>
+
+      <button
+        class="clear"
+        onclick="clearEditor()"
+      >
+        지우기
+      </button>
+
+      <button
+        class="download"
+        onclick="downloadHTML()"
+      >
+        다운로드
+      </button>
+
     </div>
+
   </header>
+
+
+  <!-- =========================
+       Main
+  ========================= -->
 
   <main>
 
-    <!-- HTML Editor -->
-    <section class="panel">
-      <div class="panel-title">HTML Code</div>
+    <!-- =========================
+         HTML Editor
+    ========================= -->
 
-      <textarea id="editor" spellcheck="false"><!DOCTYPE html>
+    <section class="panel">
+
+      <div class="panel-title">
+        HTML Code
+      </div>
+
+
+      <div class="editor-container">
+
+        <!-- 색상이 적용되는 코드 -->
+        <pre id="highlight"><code class="language-markup"></code></pre>
+
+
+        <!-- 실제 입력창 -->
+        <textarea
+          id="editor"
+          spellcheck="false"
+          wrap="off"
+        ><!DOCTYPE html>
 <html>
 <head>
   <title>Hello World</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 50px;
+      background: #f3f4f6;
     }
 
     h1 {
@@ -173,94 +419,284 @@
       color: white;
       cursor: pointer;
     }
+
+    button:hover {
+      background: #1d4ed8;
+    }
   </style>
+
 </head>
 
 <body>
+
   <h1>Hello World!</h1>
-  <p>HTML Online Viewer입니다.</p>
+
+  <p>
+    HTML Online Viewer입니다.
+  </p>
+
   <button onclick="alert('안녕하세요!')">
     클릭하세요
   </button>
+
 </body>
 </html></textarea>
+
+      </div>
+
     </section>
 
-    <!-- Preview -->
+
+    <!-- =========================
+         Preview
+    ========================= -->
+
     <section class="panel">
-      <div class="panel-title">Preview</div>
+
+      <div class="panel-title">
+        Preview
+      </div>
 
       <div class="preview-wrapper">
+
         <iframe
           id="preview"
           sandbox="allow-scripts allow-forms allow-modals">
         </iframe>
+
       </div>
+
     </section>
 
   </main>
 
+
+  <!-- =========================
+       Prism.js
+    ========================= -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+
+  <!-- HTML / Markup -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+
+  <!-- CSS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+
+  <!-- JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+
+
   <script>
-    const editor = document.getElementById("editor");
-    const preview = document.getElementById("preview");
 
-    // HTML 실행
+    /* =========================
+       Elements
+    ========================= */
+
+    const editor =
+      document.getElementById("editor");
+
+    const preview =
+      document.getElementById("preview");
+
+    const highlight =
+      document.querySelector("#highlight code");
+
+    const highlightContainer =
+      document.getElementById("highlight");
+
+
+    /* =========================
+       Syntax Highlight
+    ========================= */
+
+    function updateHighlight() {
+
+      /*
+        textarea의 내용을 가져온다.
+      */
+      const code = editor.value;
+
+      /*
+        HTML을 그대로 넣는 것이 아니라
+        textContent로 넣어서 안전하게 처리한다.
+      */
+      highlight.textContent = code;
+
+      /*
+        Prism.js로 문법 강조
+      */
+      Prism.highlightElement(highlight);
+
+    }
+
+
+    /* =========================
+       HTML 실행
+    ========================= */
+
     function runHTML() {
-    preview.srcdoc = editor.value;
+
+      preview.srcdoc = editor.value;
+
     }
 
-    // 에디터 내용 삭제
+
+    /* =========================
+       Editor Clear
+    ========================= */
+
     function clearEditor() {
+
       editor.value = "";
+
       preview.srcdoc = "";
+
+      updateHighlight();
+
       editor.focus();
+
     }
 
-    // HTML 파일 다운로드
+
+    /* =========================
+       Download HTML
+    ========================= */
+
     function downloadHTML() {
+
       const html = editor.value;
 
       const blob = new Blob(
         [html],
-        { type: "text/html;charset=utf-8" }
+        {
+          type: "text/html;charset=utf-8"
+        }
       );
 
-      const url = URL.createObjectURL(blob);
+      const url =
+        URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
+      const a =
+        document.createElement("a");
+
       a.href = url;
+
       a.download = "index.html";
+
+      document.body.appendChild(a);
+
       a.click();
 
+      document.body.removeChild(a);
+
       URL.revokeObjectURL(url);
+
     }
 
-    // 입력할 때마다 실시간 미리보기
-    editor.addEventListener("input", () => {
-      preview.srcdoc = editor.value;
-    });
 
-    // Tab 키를 누르면 스페이스 2칸
-    editor.addEventListener("keydown", (event) => {
-      if (event.key === "Tab") {
-        event.preventDefault();
+    /* =========================
+       Real-time Preview
+    ========================= */
 
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
+    editor.addEventListener(
+      "input",
+      () => {
 
-        editor.value =
-          editor.value.substring(0, start) +
-          "  " +
-          editor.value.substring(end);
-
-        editor.selectionStart = editor.selectionEnd = start + 2;
-
+        /*
+          미리보기 업데이트
+        */
         preview.srcdoc = editor.value;
-      }
-    });
 
-    // 최초 실행
+        /*
+          코드 색상 업데이트
+        */
+        updateHighlight();
+
+      }
+    );
+
+
+    /* =========================
+       Scroll Synchronization
+    ========================= */
+
+    editor.addEventListener(
+      "scroll",
+      () => {
+
+        highlightContainer.scrollTop =
+          editor.scrollTop;
+
+        highlightContainer.scrollLeft =
+          editor.scrollLeft;
+
+      }
+    );
+
+
+    /* =========================
+       Tab Key
+    ========================= */
+
+    editor.addEventListener(
+      "keydown",
+      (event) => {
+
+        if (event.key === "Tab") {
+
+          event.preventDefault();
+
+          const start =
+            editor.selectionStart;
+
+          const end =
+            editor.selectionEnd;
+
+
+          /*
+            선택된 부분을
+            공백 2칸으로 대체
+          */
+
+          editor.value =
+            editor.value.substring(0, start) +
+            "  " +
+            editor.value.substring(end);
+
+
+          /*
+            커서를 Tab 다음으로 이동
+          */
+
+          editor.selectionStart =
+            editor.selectionEnd =
+              start + 2;
+
+
+          /*
+            업데이트
+          */
+
+          updateHighlight();
+
+          preview.srcdoc =
+            editor.value;
+
+        }
+
+      }
+    );
+
+
+    /* =========================
+       초기 실행
+    ========================= */
+
+    updateHighlight();
+
     runHTML();
+
   </script>
 
 </body>
