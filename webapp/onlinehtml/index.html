@@ -212,7 +212,16 @@
 
     // HTML 실행
     function runHTML() {
-      preview.srcdoc = editor.value;
+    const newTab = window.open("about:blank", "_blank");
+
+    if (!newTab) {
+        alert("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
+        return;
+    }
+
+    newTab.document.open();
+    newTab.document.write(editor.value);
+    newTab.document.close();
     }
 
     // 에디터 내용 삭제
